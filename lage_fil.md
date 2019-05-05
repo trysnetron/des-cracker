@@ -1,5 +1,5 @@
 ## Hvordan lage makefiler for vhdl prosjekter
-
+Dette er test-tekst.
 Makefiler med VHDL er visst en del vanskeligere enn makefiler i C fordi det ikke er slik at compileren lager en separat .o fil 
 hver .vhd fil naar man typer make. Kompilatoren lager mange filer som man ikke nodvendigvis klarer aa holde styr paa. Maaten
 vi kommer oss rundt dette er aa lage en .tag fil (for hver .vhd fil) som holder som oppdateres hver gang en .vhd fil kompileres.
