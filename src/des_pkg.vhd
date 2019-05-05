@@ -59,7 +59,7 @@ end package des_pkg;
 
 package body des_pkg is 
     
-    function sub_key_gen(key:w64) return w728 is
+    function sub_key_gen(key:w64) return w728 is -- Returns all subkeys concatenated to one long bit vector of length 728
         variable permuted_key:w56;
         variable c:w28;
         variable d:w28;
@@ -84,7 +84,7 @@ package body des_pkg is
             end if;
             concatenated_pair := c & d;
             for j in 1 to 48 loop
-                result(i*48 - 1 + j) := concatenated_pair(pc2_table(j));
+                result((i - 1)*48 + j) := concatenated_pair(pc2_table(j));
             end loop;
         end loop;
         return result;
