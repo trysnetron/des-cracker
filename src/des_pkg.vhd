@@ -223,9 +223,9 @@ package body des_pkg is
         variable col    : natural range 0 to 15;
         variable result : std_ulogic_vector(1 to 4);
     begin
-        row := to_integer(unsigned(a(1) & a(6)));
+        row := to_integer(unsigned(std_ulogic_vector'(a(1) & a(6))));
         col := to_integer(unsigned(a(2 to 5)));
-        result := std_ulogic_vector(to_unsigned(s(row*4 + col)));
+        result := std_ulogic_vector(to_unsigned(s(row*4 + col), 4));
         return result;
     end function s_map;
 
