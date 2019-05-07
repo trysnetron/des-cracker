@@ -12,11 +12,12 @@ package des_pkg is
     subtype w64 is std_ulogic_vector(1 to 64);
     subtype w728 is std_ulogic_vector(1 to 768);
 
-    type ip_t is array(1 to 64) of natural range 1 to 64;
+    type ip_t  is array(1 to 64) of natural range 1 to 64;
     type pc1_t is array(1 to 56) of natural range 1 to 64;
     type pc2_t is array(1 to 48) of natural range 1 to 56;
-    type es_t is array(1 to 48) of natural range 1 to 32;
-    type s_t is array(0 to 63) of natural range 0 to 15;
+    type es_t  is array(1 to 48) of natural range 1 to 32;
+    type s_t   is array(0 to 63) of natural range 0 to 15;
+	type pf_t  is array(1 to 32) of natural range 1 to 32;
 
     constant ip_table : ip_t := (
         58, 50, 42, 34, 26, 18, 10,  2, 
@@ -110,6 +111,17 @@ package des_pkg is
          7, 11,  4,  1,  9, 12, 14,  2,  0,  6, 10, 13, 15,  3,  5,  8,
          2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11 
     );
+
+	constant pf_table : pf_t := (
+		16,   7,  20,  21,  
+        29,  12,  28,  17,
+		 1,  15,  23,  26,
+		 5,  18,  31,  10,
+		 2,   8,  24,  14,
+		32,  27,   3,   9,
+		19,  13,  30,   6,
+		22,  11,   4,  25
+	);
     
     function left_shift(w:w28; amount:natural) return w28;
     function right_shift(w:w28; amount:natural) return w28;
@@ -192,20 +204,27 @@ package body des_pkg is
     end function;
 
     function feistel(R:w32; K:w48) return w32 is
-        variable temp:w48;
-        variable result:w32;
+        variable temp_xor:w48;
+        variable temp_smap:w32;
+		variable result:w32;
     begin
-        temp := ebs(R) xor K;
-        
-        result( 1 to  4) := s_map(temp( 1 to  6), s_1);
-        result( 5 to  8) := s_map(temp( 7 to 12), s_2);
-        result( 9 to 12) := s_map(temp(13 to 18), s_3);
-        result(13 to 16) := s_map(temp(19 to 24), s_4);
-        result(17 to 20) := s_map(temp(25 to 30), s_5);
-        result(21 to 24) := s_map(temp(31 to 36), s_6);
-        result(25 to 28) := s_map(temp(37 to 42), s_7);
-        result(29 to 32) := s_map(temp(43 to 48), s_8);
-
+		-- performing bitwise xor of E(R) and subkey K_i
+        temp_xor := ebs(R) xor K;
+		
+		-- performing s mapping of output of xor
+        temp_smap( 1 to  4) := s_map(temp_xor( 1 to  6), s_1);
+        temp_smap( 5 to  8) := s_map(temp_xor( 7 to 12), s_2);
+        temp_smap( 9 to 12) := s_map(temp_xor(13 to 18), s_3);
+        temp_smap(13 to 16) := s_map(temp_xor(19 to 24), s_4);
+        temp_smap(17 to 20) := s_map(temp_xor(25 to 30), s_5);
+        temp_smap(21 to 24) := s_map(temp_xor(31 to 36), s_6);
+        temp_smap(25 to 28) := s_map(temp_xor(37 to 42), s_7);
+        temp_smap(29 to 32) := s_map(temp_xor(43 to 48), s_8);
+		
+		-- performing permutation of output of s mapping
+		for i in 1 to 32 loop
+			result(i) := temp_smap(pf_table(i));
+		end loop;
         return result;
     end function feistel;
    
@@ -225,7 +244,7 @@ package body des_pkg is
     begin
         row := to_integer(unsigned(std_ulogic_vector'(a(1) & a(6))));
         col := to_integer(unsigned(a(2 to 5)));
-        result := std_ulogic_vector(to_unsigned(s(row*4 + col), 4));
+        result := std_ulogic_vector(to_unsigned(s(row*16 + col), 4));
         return result;
     end function s_map;
 
