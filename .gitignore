@@ -2,3 +2,4 @@ transcript
 modelsim.ini
 work
 *.swp
+vsim.wlf
