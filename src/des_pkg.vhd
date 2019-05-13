@@ -138,7 +138,7 @@ package des_pkg is
 end package des_pkg;
 
 package body des_pkg is 
-    
+    -- function for generating subkeys from initial key ----------------------------------------------------------------------------
     function sub_key_gen(key:w64) return w728 is -- Returns all subkeys concatenated to one long bit vector of length 728
         variable permuted_key:w56;
         variable c:w28;
@@ -168,8 +168,9 @@ package body des_pkg is
             end loop;
         end loop;
         return result;
-    end function;
+    end function sub_key_gen;
 
+    -- function for cyclic left shift -----------------------------------------------------------------------------------------------
     function left_shift(w:w28; amount:natural) return w28 is
         begin
         if amount = 2 then
@@ -179,9 +180,9 @@ package body des_pkg is
         else
             assert false report "ERROR" severity failure;
         end if;
-    end left_shift;
+    end function left_shift;
 
-
+    -- function for cyclic right shift -----------------------------------------------------------------------------------------------
     function right_shift(w:w28; amount:natural) return w28 is
         begin
         if amount = 2 then
@@ -191,9 +192,9 @@ package body des_pkg is
         else
             assert false report "ERROR" severity failure;
         end if;
-    end right_shift;
+    end function right_shift;
 
-
+    -- function for initial permutation ----------------------------------------------------------------------------------------------
     function ip(w:w64) return w64 is
         variable result:w64;
     begin
@@ -201,8 +202,31 @@ package body des_pkg is
             result(i) := w(ip_table(i));
         end loop;
         return result;
-    end function;
+    end function ip;
 
+    -- e bit selection table function ------------------------------------------------------------------------------------------------
+    function ebs(w:w32) return w48 is
+        variable result:w48;
+    begin
+        for i in 1 to 48 loop
+            result(i) := w(e_sel_table(i));
+        end loop;
+        return result;
+    end function ebs;
+	
+    -- function to perform s-mapping according to the 8 different s-tables -----------------------------------------------------------
+    function s_map(a:w6; s:s_t) return w4 is
+        variable row    : natural range 0 to 3;
+        variable col    : natural range 0 to 15;
+        variable result : std_ulogic_vector(1 to 4);
+    begin
+        row := to_integer(unsigned(std_ulogic_vector'(a(1) & a(6))));
+        col := to_integer(unsigned(a(2 to 5)));
+        result := std_ulogic_vector(to_unsigned(s(row*16 + col), 4));
+        return result;
+    end function s_map;
+
+    -- feistel function ---------------------------------------------------------------------------------------------------------------
     function feistel(R:w32; K:w48) return w32 is
         variable temp_xor:w48;
         variable temp_smap:w32;
@@ -227,26 +251,9 @@ package body des_pkg is
 		end loop;
         return result;
     end function feistel;
-   
-    function ebs(w:w32) return w48 is
-        variable result:w48;
-    begin
-        for i in 1 to 48 loop
-            result(i) := w(e_sel_table(i));
-        end loop;
-        return result;
-    end function;
 
-    function s_map(a:w6; s:s_t) return w4 is
-        variable row    : natural range 0 to 3;
-        variable col    : natural range 0 to 15;
-        variable result : std_ulogic_vector(1 to 4);
-    begin
-        row := to_integer(unsigned(std_ulogic_vector'(a(1) & a(6))));
-        col := to_integer(unsigned(a(2 to 5)));
-        result := std_ulogic_vector(to_unsigned(s(row*16 + col), 4));
-        return result;
-    end function s_map;
+	-- function to do one iteration of 16 step procedure
+	-- function encrypt_iter( )
 
 end package body des_pkg;
 
