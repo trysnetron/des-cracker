@@ -19,7 +19,7 @@ use work.des_pkg.all;
 
 entity des_sim is
     --port(
-    --    keys : out w728
+    --    keys : out w768
     --);
 end entity des_sim;
 
@@ -65,7 +65,7 @@ architecture sim of des_sim is
     -- Sub key generation
     constant skg_initial_key : w64 := 
         "0001001100110100010101110111100110011011101111001101111111110001";
-    constant skg_subkeys : w728 := 
+    constant skg_subkeys : w768 := 
         "000110110000001011101111111111000111000001110010" &
         "011110011010111011011001110110111100100111100101" &
         "010101011111110010001010010000101100111110011001" &
@@ -83,6 +83,16 @@ architecture sim of des_sim is
         "101111111001000110001101001111010011111100001010" &
         "110010110011110110001011000011100001011111110101"; 
 
+    constant iip_test_in : w64 := 
+        "0000101001001100110110011001010101000011010000100011001000110100";
+
+    constant iip_test_out : w64 := 
+        "1000010111101000000100110101010000001111000010101011010000000101";
+
+    constant des_step_test_subkey : w48 := "000110110000001011101111111111000111000001110010"; -- K1
+    constant des_step_test_r : w32 := "11110000101010101111000010101010"; -- R0
+    constant des_step_test_l : w32 := "11001100000000001100110011111111"; -- L0
+    constant des_step_test_result : w64 := "1111000010101010111100001010101011101111010010100110010101000100"; -- L1 & R1
 begin
     -- Initial permutation
     assert (ip(ip_test_w) = ip_test_res) report "ERROR: Initial permutation gives bad output" severity error;
@@ -112,5 +122,12 @@ begin
         integer'image(to_integer(unsigned(feistel(feistel_test_R, feistel_test_K)))) &
         " Should be " &
         integer'image(to_integer(unsigned(feistel_test_res))) severity error;
+    
+    -- Inverse initial permutation
+    assert (iip(iip_test_in) = iip_test_out) report "iip test failed" severity error;  
 
+    -- Single iteration of 16 step cracker procedure
+    assert (des_step(des_step_test_subkey, des_step_test_l, des_step_test_r) = des_step_test_result) report "DES step test failed" &
+    "resultat: " & integer'image(to_integer(unsigned(des_step(des_step_test_subkey, des_step_test_l, des_step_test_r)))) & 
+    "fasit: " & integer'image(to_integer(unsigned(des_step_test_result))) severity error;
 end architecture sim;

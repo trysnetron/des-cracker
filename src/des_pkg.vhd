@@ -10,7 +10,7 @@ package des_pkg is
     subtype w48 is std_ulogic_vector(1 to 48);
     subtype w56 is std_ulogic_vector(1 to 56);
     subtype w64 is std_ulogic_vector(1 to 64);
-    subtype w728 is std_ulogic_vector(1 to 768);
+    subtype w768 is std_ulogic_vector(1 to 768);
 
     type ip_t  is array(1 to 64) of natural range 1 to 64;
     type pc1_t is array(1 to 56) of natural range 1 to 64;
@@ -113,39 +113,48 @@ package des_pkg is
     );
 
 	constant pf_table : pf_t := (
-		16,   7,  20,  21,  
-        29,  12,  28,  17,
-		 1,  15,  23,  26,
-		 5,  18,  31,  10,
-		 2,   8,  24,  14,
-		32,  27,   3,   9,
-		19,  13,  30,   6,
-		22,  11,   4,  25
+		16,  7, 20, 21,  
+        29, 12, 28, 17,
+		 1, 15, 23, 26,
+		 5, 18, 31, 10,
+		 2,  8, 24, 14,
+		32, 27,  3,  9,
+		19, 13, 30,  6,
+		22, 11,  4, 25
+	);
+
+	constant iip_table : ip_t := (
+		40,  8, 48, 16, 56, 24, 64, 32,
+		39,  7, 47, 15, 55, 23, 63, 31,
+		38,  6, 46, 14, 54, 22, 62, 30,
+        37,  5, 45, 13, 53, 21, 61, 29,
+        36,  4, 44, 12, 52, 20, 60, 28,
+	    35,  3, 43, 11, 51, 19, 59, 27,
+        34,  2, 42, 10, 50, 18, 58, 26,
+        33,  1, 41,  9, 49, 17, 57, 25
 	);
     
     function left_shift(w:w28; amount:natural) return w28;
     function right_shift(w:w28; amount:natural) return w28;
-    function sub_key_gen(key:w64) return w728;
+    function sub_key_gen(key:w64) return w768;
     function feistel(R:w32; K:w48) return w32;
     function s_map(a:w6; s:s_t) return w4;
     
-    -- function p(w:w32) return w32;
-    -- function f(r:w32; rk: w48) return w32;
-    -- function des(p:w64; k:w64) return w64;
     function ip(w:w64) return w64;
     function ebs(w:w32) return w48;
+	function iip(w:w64) return w64;
+	function des_step(subkey:w48; left:w32; right:w32) return w64;
 
 end package des_pkg;
 
 package body des_pkg is 
     -- function for generating subkeys from initial key ----------------------------------------------------------------------------
-    function sub_key_gen(key:w64) return w728 is -- Returns all subkeys concatenated to one long bit vector of length 728
+    function sub_key_gen(key:w64) return w768 is -- Returns all subkeys concatenated to one long bit vector of length 728
         variable permuted_key:w56;
         variable c:w28;
         variable d:w28;
         variable concatenated_pair:w56;
-        variable result:w728;
-
+        variable result:w768;
     begin
         -- permuting key according to table PC-1
         for i in 1 to 56 loop
@@ -251,9 +260,22 @@ package body des_pkg is
 		end loop;
         return result;
     end function feistel;
+	
+	-- function to do inverse initial permutation --------------------------------------------------------------------------------------
+	function iip(w:w64) return w64 is
+        variable result:w64;
+    begin
+        for i in 1 to 64 loop
+            result(i) := w(iip_table(i));
+        end loop;
+        return result;
+	end function iip;
 
-	-- function to do one iteration of 16 step procedure
-	-- function encrypt_iter( )
+	-- function to do one iteration of 16 step procedure -------------------------------------------------------------------------------
+	function des_step(subkey:w48; left:w32; right:w32) return w64 is
+	begin
+		return right & (left xor feistel(right, subkey));
+	end function des_step;
 
 end package body des_pkg;
 
