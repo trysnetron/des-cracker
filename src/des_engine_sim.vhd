@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.des_pkg.all;
+use std.env.all; -- Neccesary to use the 'finish' command
 
 entity des_engine_sim is
 port(
@@ -23,13 +24,28 @@ begin
 
     process
     begin
+        sresetn <= '0';
+        wait for period;
+        sresetn <= '1';
         clk <= '0';
         wait for period / 2.0;
         clk <= '1';
         wait for period / 2.0;
-    end process;
+        clk <= '0';
+        wait for period / 2.0;
+        clk <= '1';
+        wait for period / 2.0;
+        clk <= '0';
+        wait for period / 2.0;
+        clk <= '1';
+        wait for period / 2.0;
+        clk <= '0';
+        wait for period / 2.0;
+        clk <= '1';
+        wait for period / 2.0;
 
-    sresetn <= '1';
+        finish(2);
+    end process;
 
     engine: entity work.des_engine(rtl)
     port map(

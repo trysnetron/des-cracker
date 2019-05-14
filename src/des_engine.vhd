@@ -37,7 +37,7 @@ begin
                 for i in 0 to 15 loop
                     acc := des_step(sk(i*48 + 1 to (i + 1)*48 ), acc(1 to 32), acc(33 to 64));
                 end loop;
-                cipher_txt <= iip(acc);
+                cipher_txt <= iip(acc(33 to 64) & acc(1 to 32));
             end if;
         end if;
     end process;
