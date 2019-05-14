@@ -139,7 +139,6 @@ package des_pkg is
     function sub_key_gen(key:w64) return w768;
     function feistel(R:w32; K:w48) return w32;
     function s_map(a:w6; s:s_t) return w4;
-    
     function ip(w:w64) return w64;
     function ebs(w:w32) return w48;
 	function iip(w:w64) return w64;

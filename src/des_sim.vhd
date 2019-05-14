@@ -130,4 +130,6 @@ begin
     assert (des_step(des_step_test_subkey, des_step_test_l, des_step_test_r) = des_step_test_result) report "DES step test failed" &
     "resultat: " & integer'image(to_integer(unsigned(des_step(des_step_test_subkey, des_step_test_l, des_step_test_r)))) & 
     "fasit: " & integer'image(to_integer(unsigned(des_step_test_result))) severity error;
+
+
 end architecture sim;
