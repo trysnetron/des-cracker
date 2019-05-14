@@ -1,7 +1,7 @@
-------------------------------------------------
------------------DES cracker--------------------
----by Trym Sneltvedt and Yohann Jacob Sandvik---
-------------------------------------------------
+-------------------------------------------------
+--------------16-step DES-engine-----------------
+---by Trym Sneltvedt, and Yohann Jacob Sandvik---
+-------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
