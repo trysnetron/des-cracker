@@ -19,6 +19,7 @@ architecture sim of des_engine_sim is
     signal clk : std_ulogic;
     signal sresetn : std_ulogic;
     signal cipher_txt : w64;
+    signal complete : std_ulogic;
 
 begin
 
@@ -47,13 +48,14 @@ begin
         finish(2);
     end process;
 
-    engine: entity work.des_engine(rtl)
+    engine: entity work.des_engine16(rtl)
     port map(
         clk         => clk,
         sresetn     => sresetn,
         plain_txt   => plain_txt,
         key         => key, 
-        cipher_txt  => cipher_txt
+        cipher_txt  => cipher_txt,
+        complete    => complete
     );
 
     ciph <= cipher_txt;
