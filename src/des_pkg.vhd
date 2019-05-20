@@ -134,6 +134,8 @@ package des_pkg is
         33,  1, 41,  9, 49, 17, 57, 25
 	);
     
+    function expand_key(w:w56) return w64;
+    function contract_key(w:w64) return w56;
     function left_shift(w:w28; amount:natural) return w28;
     function right_shift(w:w28; amount:natural) return w28;
     function sub_key_gen(key:w64) return w768;
@@ -146,7 +148,7 @@ package des_pkg is
 
 end package des_pkg;
 
-package body des_pkg is 
+package body des_pkg is
     -- function for generating subkeys from initial key ----------------------------------------------------------------------------
     function sub_key_gen(key:w64) return w768 is -- Returns all subkeys concatenated to one long bit vector of length 728
         variable permuted_key:w56;
