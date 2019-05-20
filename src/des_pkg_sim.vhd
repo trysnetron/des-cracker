@@ -17,13 +17,13 @@ use work.des_pkg.all;
 -- test for s_map function
 -- test for feistel function
 
-entity des_sim is
+entity des_pkg_sim is
     --port(
     --    keys : out w768
     --);
-end entity des_sim;
+end entity des_pkg_sim;
 
-architecture sim of des_sim is
+architecture sim of des_pkg_sim is
     -------------------
     -- Package tests --
     -------------------
