@@ -13,7 +13,7 @@ package des_pkg is
     subtype w768 is std_ulogic_vector(1 to 768);
 
     type ip_t  is array(1 to 64) of natural range 1 to 64;
-    type pc1_t is array(1 to 56) of natural range 1 to 64;
+    type pc1_t is array(1 to 56) of natural range 1 to 56;
     type pc2_t is array(1 to 48) of natural range 1 to 56;
     type es_t  is array(1 to 48) of natural range 1 to 32;
     type s_t   is array(0 to 63) of natural range 0 to 15;
@@ -30,15 +30,33 @@ package des_pkg is
         63, 55, 47, 39, 31, 23, 15,  7
     );
 
+    -- constant pc1_table : pc1_t := (
+    --     57, 49, 41, 33, 25, 17, 9,
+    --      1, 58, 50, 42, 34, 26, 18,
+    --     10,  2, 59, 51, 43, 35, 27,
+    --     19, 11,  3, 60, 52, 44, 36,
+    --     63, 55, 47, 39, 31, 23, 15,
+    --      7, 62, 54, 46, 38, 30, 22,
+    --     14,  6, 61, 53, 45, 37, 29,
+    --     21, 13,  5, 28, 20, 12,  4
+    -- );
+    -- ORIGINAL INDEXING IN pc1_table
+    --  1  2  3  4  5  6  7  9 10 11 12 13 14 15 17 18 19 20 21 22 23 25 26 27 28 29 30 31
+    -- 33 34 35 36 37 38 39 41 42 43 44 45 46 47 49 50 51 52 53 54 55 57 58 59 60 61 62 63
+
+    -- NEW INDEXING IN pc1_table
+    --  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
+    -- 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56
+
     constant pc1_table : pc1_t := (
-        57, 49, 41, 33, 25, 17, 9,
-         1, 58, 50, 42, 34, 26, 18,
-        10,  2, 59, 51, 43, 35, 27,
-        19, 11,  3, 60, 52, 44, 36,
-        63, 55, 47, 39, 31, 23, 15,
-         7, 62, 54, 46, 38, 30, 22,
-        14,  6, 61, 53, 45, 37, 29,
-        21, 13,  5, 28, 20, 12,  4
+        50, 43, 36, 29, 22, 15, 8,
+         1, 51, 44, 37, 30, 23, 16,
+         9,  2, 52, 45, 38, 31, 24,
+        17, 10,  3, 53, 46, 39, 32,
+        56, 49, 42, 35, 28, 21, 14,
+         7, 55, 48, 41, 34, 27, 20,
+         13,  6, 54, 47, 40, 33, 26,
+         19, 12,  5, 25, 18, 11,  4
     );
 
     constant pc2_table : pc2_t := (
@@ -134,11 +152,9 @@ package des_pkg is
         33,  1, 41,  9, 49, 17, 57, 25
 	);
     
-    function expand_key(w:w56) return w64;
-    function contract_key(w:w64) return w56;
     function left_shift(w:w28; amount:natural) return w28;
     function right_shift(w:w28; amount:natural) return w28;
-    function sub_key_gen(key:w64) return w768;
+    function sub_key_gen(key:w56) return w768;
     function feistel(R:w32; K:w48) return w32;
     function s_map(a:w6; s:s_t) return w4;
     function ip(w:w64) return w64;
@@ -150,7 +166,7 @@ end package des_pkg;
 
 package body des_pkg is
     -- function for generating subkeys from initial key ----------------------------------------------------------------------------
-    function sub_key_gen(key:w64) return w768 is -- Returns all subkeys concatenated to one long bit vector of length 728
+    function sub_key_gen(key:w56) return w768 is -- Returns all subkeys concatenated to one long bit vector of length 728
         variable permuted_key:w56;
         variable c:w28;
         variable d:w28;
