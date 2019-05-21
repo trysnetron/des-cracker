@@ -161,6 +161,7 @@ package des_pkg is
     function ebs(w:w32) return w48;
 	function iip(w:w64) return w64;
 	function des_step(subkey:w48; left:w32; right:w32) return w64;
+	function increment_key(key:w56; N:natural) return w56;
 
 end package des_pkg;
 
