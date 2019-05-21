@@ -11,7 +11,7 @@ use work.des_pkg.all;
 entity des_key_checker is
 port(
     clk         : in  std_ulogic; 
-    sresetn     : in  std_ulogic; -- synchronys active low reset
+    sresetn     : in  std_ulogic; -- synchronus active low reset
     plain_txt   : in  w64;
     key         : in  w56;
     correct_txt : in  w64;
