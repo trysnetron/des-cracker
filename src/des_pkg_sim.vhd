@@ -17,13 +17,13 @@ use work.des_pkg.all;
 -- test for s_map function
 -- test for feistel function
 
-entity des_sim is
+entity des_pkg_sim is
     --port(
     --    keys : out w768
     --);
-end entity des_sim;
+end entity des_pkg_sim;
 
-architecture sim of des_sim is
+architecture sim of des_pkg_sim is
     -------------------
     -- Package tests --
     -------------------
@@ -62,9 +62,11 @@ architecture sim of des_sim is
     constant feistel_test_res : w32 := 
         "00100011010010101010100110111011";
 
-    -- Sub key generation
-    constant skg_initial_key : w64 := 
-        "0001001100110100010101110111100110011011101111001101111111110001";
+    -- Sub key generation -- MUST BE CHANGED FOR 56 BIT FORMAT
+    -- constant skg_initial_key : w64 := 
+    --     "00010011 00110100 01010111 01111001 10011011 10111100 11011111 11110001";
+    constant skg_initial_key : w56 := 
+        "00010010011010010101101111001001101101111011011111111000";
     constant skg_subkeys : w768 := 
         "000110110000001011101111111111000111000001110010" &
         "011110011010111011011001110110111100100111100101" &
