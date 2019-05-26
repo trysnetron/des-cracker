@@ -221,6 +221,7 @@ process(aclk) begin
 					-- Upper bits of k0.
 					k0(33 to 56) <= s0_axi_wdata(31 downto 8);
 					crack_begin <= '1';
+					crack_end	<= '0';
 
 				elsif unsigned(s0_axi_awaddr) < 40 then
 					s0_axi_bresp <= b"10"; -- SLVERR
