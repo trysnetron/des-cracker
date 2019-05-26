@@ -13,7 +13,7 @@ port(
     clk         : in  std_ulogic; -- axi4 clock from one of the cortex CPUs
     sresetn     : in  std_ulogic; -- synchronys active low reset
     plain_txt   : in  w64;
-    key         : in  w64;
+    key         : in  w56;
     cipher_txt  : out w64;
     complete    : out std_ulogic -- 1 if encryption is complete
 );

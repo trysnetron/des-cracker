@@ -1,5 +1,5 @@
 -------------------------------------------------
-------------------DES-checker--------------------
+----------------DES-key-checker------------------
 ---by Trym Sneltvedt, and Yohann Jacob Sandvik---
 -------------------------------------------------
 library ieee;
@@ -7,13 +7,13 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.des_pkg.all;
 
--- Setting up entity of the engine --  
+-- Setting up entity of the key_checker --  
 entity des_key_checker is
 port(
-    clk         : in  std_ulogic; -- axi4 clock from one of the cortex CPUs
-    sresetn     : in  std_ulogic; -- synchronys active low reset
+    clk         : in  std_ulogic; 
+    sresetn     : in  std_ulogic; -- synchronus active low reset
     plain_txt   : in  w64;
-    key         : in  w64;
+    key         : in  w56;
     correct_txt : in  w64;
     complete    : out std_ulogic; -- 1 if check is complete, 0 otherwise
     check       : out std_ulogic  -- 1 if we have found the correct key, 0 otherwise
@@ -34,7 +34,7 @@ begin
             complete    <= '0';
             check       <= '0';
         else
-            if engine_complete <= '1' then
+            if engine_complete = '1' then
                 if cipher_txt = correct_txt then
                     check <= '1';
                 else
@@ -53,7 +53,7 @@ begin
             if sresetn = '0' then
                 cipher_txt      <= (others => '0');
                 engine_complete <= '0';
-            else
+            elsif complete /= '1' then
                 sk := sub_key_gen(key); -- generates all subkeys for 16 iterations
                 acc := ip(plain_txt);   -- initial permutation of plain text.
                 for i in 0 to 15 loop

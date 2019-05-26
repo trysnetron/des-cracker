@@ -161,10 +161,23 @@ package des_pkg is
     function ebs(w:w32) return w48;
 	function iip(w:w64) return w64;
 	function des_step(subkey:w48; left:w32; right:w32) return w64;
+	function increment_key(key:w56; N:natural) return w56;
 
 end package des_pkg;
 
 package body des_pkg is
+
+    -- function for incrementing key -----------------------------------------------------------------------------------------------
+	function increment_key(key:w56; N:natural) return w56 is 
+		variable result : unsigned(1 to 56);
+	begin
+		result := unsigned(key);
+		for i in 1 to N loop
+			result := result + '1';
+		end loop;
+		return std_ulogic_vector(result);
+	end function increment_key;
+
     -- function for generating subkeys from initial key ----------------------------------------------------------------------------
     function sub_key_gen(key:w56) return w768 is -- Returns all subkeys concatenated to one long bit vector of length 728
         variable permuted_key:w56;
