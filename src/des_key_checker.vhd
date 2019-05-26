@@ -34,7 +34,7 @@ begin
             complete    <= '0';
             check       <= '0';
         else
-            if engine_complete <= '1' then
+            if engine_complete = '1' then
                 if cipher_txt = correct_txt then
                     check <= '1';
                 else
@@ -53,7 +53,7 @@ begin
             if sresetn = '0' then
                 cipher_txt      <= (others => '0');
                 engine_complete <= '0';
-            else
+            elsif complete /= '1' then
                 sk := sub_key_gen(key); -- generates all subkeys for 16 iterations
                 acc := ip(plain_txt);   -- initial permutation of plain text.
                 for i in 0 to 15 loop

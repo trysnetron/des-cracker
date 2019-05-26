@@ -16,6 +16,7 @@ port(
     plain_txt   : in  w64;
     cipher_txt  : in  w64;
     start_key   : in  w56;
+    current_key : out w56;
     found_key   : out w56;
     sm_complete : out std_ulogic
 );
@@ -33,15 +34,17 @@ architecture rtl of des_sm is
     signal check: std_ulogic;
 
     -- signals into checkers
-    signal k: w64; -- current key
-    signal checker_restart: std_ulogic;
+    signal k                : w56; -- current key
+    signal k2               : w56; -- current key + 1 
+    signal checker_restart  : std_ulogic;
+    signal checker_reset    : std_ulogic;
 
     -- signals out of checkers
-    signal check1: std_ulogic;
-    signal complete1: std_ulogic;
+    signal check1           : std_ulogic;
+    signal complete1        : std_ulogic;
 
-    signal check2: std_ulogic;
-    signal complete2: std_ulogic;
+    signal check2           : std_ulogic;
+    signal complete2        : std_ulogic;
 
 begin
     /* 
@@ -50,13 +53,16 @@ begin
     the keys are incremented by N, and the key-checkers continue checking keys. 
     If one checker succeds all the checkers are stopped. 
     */
+    k2 <= increment_key(k,1);
     complete <= complete1 and complete2;
     check <= check1 or check2;
+    checker_reset <= (sresetn and checker_restart);
+    current_key <= k;
 
     key_checker1 : entity work.des_key_checker(rtl)
     port map(
-        clk         => clk
-        sresetn     => sresetn and checker_restart,
+        clk         => clk,
+        sresetn     => checker_reset,
         plain_txt   => plain_txt,
         correct_txt => cipher_txt,
         key         => k,
@@ -66,10 +72,11 @@ begin
 
     key_checker2 : entity work.des_key_checker(rtl)
     port map(
-        clk         => clk
-        sresetn     => sresetn and checker_restart,
+        clk         => clk,
+        sresetn     => checker_reset,
         plain_txt   => plain_txt,
-        key         => increment_key(k,1),
+        correct_txt => cipher_txt,
+        key         => k2,
         complete    => complete2,
         check       => check2
     );
@@ -88,28 +95,29 @@ begin
                         if crck_begin = '1' then
                             state <= WORKING;
                             k <= start_key;
-                            checker_restart <= '1';
+                            checker_restart <= '0'; -- Active low
                             sm_complete <= '0'; 
                         end if;
 
                     when WORKING =>
-                        checker_restart <= '0';
+                        checker_restart <= '1';
                         if complete = '1' then
                             if check = '1' then
                                 if check1 = '1' then
                                     found_key <= k;
                                 elsif check2 = '1' then
-                                    found_key <= increment_key(k,1);
+                                    found_key <= k2;
                                 end if;
                                 state <= IDLE;
+                                sm_complete <= '1';
                             else
-                                checker_restart <= '1'; 
+                                checker_restart <= '0'; 
                                 k <= increment_key(k,N);
                             end if;
-                           sm_complete <= '1'; 
                         end if;
                 end case;
             end if;
+        end if;
     end process;
 
 end architecture rtl;
