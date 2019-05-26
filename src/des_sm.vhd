@@ -13,6 +13,7 @@ port(
     clk         : in  std_ulogic;
     sresetn     : in  std_ulogic;
     crck_begin  : in  std_ulogic;
+    crck_end    : in  std_ulogic;
     plain_txt   : in  w64;
     cipher_txt  : in  w64;
     start_key   : in  w56;
@@ -57,7 +58,7 @@ begin
     complete <= complete1 and complete2;
     check <= check1 or check2;
     checker_reset <= (sresetn and checker_restart);
-    current_key <= k;
+    current_key <= unsigned(k) - 1;
 
     key_checker1 : entity work.des_key_checker(rtl)
     port map(
@@ -100,19 +101,26 @@ begin
                         end if;
 
                     when WORKING =>
-                        checker_restart <= '1';
-                        if complete = '1' then
-                            if check = '1' then
-                                if check1 = '1' then
-                                    found_key <= k;
-                                elsif check2 = '1' then
-                                    found_key <= k2;
+                        if crck_end = '1' then
+                            state           <= IDLE;
+                            checker_restart <= '0';
+                            k <= (others => '0');
+                            found_key <= (others => '0'); 
+                        else
+                            checker_restart <= '1';
+                            if complete = '1' then
+                                if check = '1' then
+                                    if check1 = '1' then
+                                        found_key <= k;
+                                    elsif check2 = '1' then
+                                        found_key <= k2;
+                                    end if;
+                                    state <= IDLE;
+                                    sm_complete <= '1';
+                                else
+                                    checker_restart <= '0'; 
+                                    k <= increment_key(k,N);
                                 end if;
-                                state <= IDLE;
-                                sm_complete <= '1';
-                            else
-                                checker_restart <= '0'; 
-                                k <= increment_key(k,N);
                             end if;
                         end if;
                 end case;
