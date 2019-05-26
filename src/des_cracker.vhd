@@ -41,7 +41,7 @@ port(
 
 
     irq            : out std_ulogic;                     -- interrupt request
-    led            : out std_ulogic_vector(3 downto 0);  -- wired to the four user LEDs                                                                                  
+    led            : out std_ulogic_vector(3 downto 0)   -- wired to the four user LEDs 
 );
 end entity des_cracker;
 
@@ -55,4 +55,6 @@ architecture rtl of des_cracker is
     signal k1  : std_ulogic_vector(55 downto 0); -- The found secret key    base adress: 0x020
 
 begin 
+
+
 end architecture rtl;

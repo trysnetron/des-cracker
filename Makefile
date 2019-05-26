@@ -10,7 +10,7 @@ SOURCE = src/des_pkg.vhd
 SIM = src/des_sim.vhd
 
 validate:
-	ghdl -a --std=08 --workdir=gh_work src/des_pkg.vhd src/des_pkg_sim.vhd
+	ghdl -a --std=08 --workdir=gh_work src/des_pkg.vhd src/des_pkg_sim.vhd src/des_cracker.vhd src/des_cracker_sim.vhd
 	ghdl -r --std=08 --workdir=$(WORKDIR) des_pkg_sim sim --vcd=$(WORKDIR)/wf.vcd
 
 # Verification with ModelSim 
