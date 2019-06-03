@@ -58,7 +58,7 @@ begin
     complete <= complete1 and complete2;
     check <= check1 or check2;
     checker_reset <= (sresetn and checker_restart);
-    current_key <= unsigned(k) - 1;
+    current_key <= k;
 
     key_checker1 : entity work.des_key_checker(rtl)
     port map(
