@@ -54,6 +54,7 @@ architecture rtl of des_cracker is
     signal k0  : std_ulogic_vector(55 downto 0); -- The starting secret key base adress: 0x010
     signal k   : std_ulogic_vector(55 downto 0); -- The current secret key  base adress: 0x018
     signal k1  : std_ulogic_vector(56 downto 0); -- The found secret key    base adress: 0x020
+	signal k_local : std_ulogic_vector(55 downto 0); -- The current secret key 
 
     constant axi_resp_okay		: std_ulogic_vector(1 downto 0) := "00";
     constant axi_resp_exokay	: std_ulogic_vector(1 downto 0) := "01";
@@ -63,12 +64,13 @@ architecture rtl of des_cracker is
 	signal crack_begin  : std_ulogic; -- Command to make engines begin checking keys
 	signal crack_end	: std_ulogic; -- Command to make engines stop
 	signal crack_compl  : std_ulogic; -- Flag for engines let us know that correct key has been found
+	signal k_freeze		: std_ulogic; -- Flag to indicate that CPU is reading current key 'k'
 
 	type rw_states is (idle, waiting);
     signal state_r, state_w : rw_states;
 
 begin 
-
+	
     sm: entity work.des_sm(rtl)
     port map(
         clk         => aclk,    
@@ -78,8 +80,11 @@ begin
         cipher_txt  => c,
         start_key   => k0,
         found_key   => k1,
+		current_key => k_local,
         sm_complete => crack_compl
     );
+
+	k <= k_local when k_freeze = '0';
 
 -- Read process.
 process(aclk) begin
@@ -110,10 +115,10 @@ process(aclk) begin
 							s0_axi_rdata <= k0(63 downto 32);
 						if unsigned(s0_axi_araddr) < x"01c" then -- LSB's of k
 							s0_axi_rdata <= k(31 downto 0);
-							-- k needs to be frozen
+							k_freeze <= '1'; -- k needs to be frozen
 						if unsigned(s0_axi_araddr) < x"020" then -- MSB's of k
 							s0_axi_rdata <= k(63 downto 32);
-							-- k needs to be unfrozen
+							k_freeze <= '0'; -- k needs to be unfrozen
 						if unsigned(s0_axi_araddr) < x"024" then -- LSB's of k1
 							s0_axi_rdata <= k1(31 downto 0);
 						if unsigned(s0_axi_araddr) < x"028" then -- MSB's of k1
