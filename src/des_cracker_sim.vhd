@@ -117,14 +117,46 @@ begin
         led            => led
     );
 
---    process
---    begin
---        aresetn <= '1';
---        s0_axi_awaddr <= X"000";
---        s0_axi_awvalid <= '1';
---        wait until rising_edge(aclk);
---
---    end process;
+    process
+    begin
+
+        -- Test by writing p, c and k to the DES Cracker, waiting 
+        -- and retrieving the result.
+
+        -- p: 0123456789ABCDEF
+        -- c: 85E813540F0AB405
+        -- k: 12695BC9B7B7F8
+
+        s0_axi_araddr   <= (others => '0');
+        s0_axi_arvalid  <= '0';
+        s0_axi_rready   <= '0';
+        s0_axi_awaddr   <= (others => '0');
+        s0_axi_awvalid  <= '0';
+        s0_axi_wdata    <= (others => '0');
+        s0_axi_wstrb    <= (others => '0');
+        s0_axi_wvalid   <= '0';
+        s0_axi_bready   <= '0';
+        aresetn         <= '1';
+
+        -- Write lower part of c
+        wait until rising_edge(aclk);
+        s0_axi_awaddr  <= x"008"; -- Probably wrong
+        s0_axi_awvalid <= '1';
+        s0_axi_wdata   <= x"85E81354";
+        s0_axi_wvalid  <= '1';
+        wait on s0_axi_wready;
+        s0_axi_wvalid <= '0';
+
+        -- Write higher part of c
+        wait until rising_edge(aclk);
+        s0_axi_awaddr  <= x"008"; -- Probably wrong
+        s0_axi_awvalid <= '1';
+        s0_axi_wdata   <= x"0F0AB405";
+        s0_axi_wvalid  <= '1';
+        wait on s0_axi_wready;
+        s0_axi_wvalid <= '0';
+
+    end process;
 
     -- Submit random AXI4 lite requests
     --process
