@@ -85,15 +85,51 @@ begin
 process(aclk) begin
 	if rising_edge(aclk) then
 		if aresetn = '0' then
-			s0_axi_arready		<= '0';
-			s0_axi_rdata 		<= (others => '0');
-			s0_axi_rresp 		<= (others => '0');
-			s0_axi_rvalid_local	<= '0';
-
-		elsif
-
+			s0_axi_arready <= '0';
+			s0_axi_rdata   <= (others => '0');
+			s0_axi_rresp   <= axi_resp_okay;	
 		else
-
+			case state_r is
+				when idle =>
+					if s0_axi_arvalid = '1' then 
+						s0_axi_arready <= '1';
+						s0_axi_rvalid  <= '1';
+						s0_axi_rresp  <= axi_resp_okay; -- change name of constants to cap. letters?
+						if unsigned(s0_axi_araddr) < x"004" then -- LSB's of p (plain text)
+							-- Unsure what is MSB and LSB
+							s0_axi_rdata <= p(31 downto 0);
+						if unsigned(s0_axi_araddr) < x"008" then -- MSB's of p
+							s0_axi_rdata <= p(63 downto 32);
+						if unsigned(s0_axi_araddr) < x"00c" then -- LSB's of c
+							s0_axi_rdata <= c(31 downto 0);
+						if unsigned(s0_axi_araddr) < x"010" then -- MSB's of c
+							s0_axi_rdata <= c(63 downto 32);
+						if unsigned(s0_axi_araddr) < x"014" then -- LSB's of k0
+							s0_axi_rdata <= k0(31 downto 0);
+						if unsigned(s0_axi_araddr) < x"018" then -- MSB's of k0
+							s0_axi_rdata <= k0(63 downto 32);
+						if unsigned(s0_axi_araddr) < x"01c" then -- LSB's of k
+							s0_axi_rdata <= k(31 downto 0);
+							-- k needs to be frozen
+						if unsigned(s0_axi_araddr) < x"020" then -- MSB's of k
+							s0_axi_rdata <= k(63 downto 32);
+							-- k needs to be unfrozen
+						if unsigned(s0_axi_araddr) < x"024" then -- LSB's of k1
+							s0_axi_rdata <= k1(31 downto 0);
+						if unsigned(s0_axi_araddr) < x"028" then -- MSB's of k1
+							s0_axi_rdata <= k1(63 downto 32);
+						else
+							s0_axi_rvalid <= '0';
+							s0_axi_rresp  <= axi_resp_decerr;
+						end if;
+						state_r <= waiting;
+					end if;
+				when waiting =>
+					if s0_axi_rready = '1' then
+						s0_axi_rvalid <= '0'; -- Handshake finished, read data no longer valid
+						state_r <= idle;
+					end if;
+			end case;
 		end if;
 	end if;
 end process;
@@ -102,20 +138,59 @@ end process;
 process(aclk) begin
 	if rising_edge(aclk) then
 		if aresetn = '0' then
-		-- Write address.
-			s0_axi_awready_local<= '0';
-			s0_axi_wready		<= '0';
-			s0_axi_bresp 		<= (others => '0');
-			s0_axi_bvalid_local	<= '0';
-
-			p	<= (others => '0');
-			c	<= (others => '0');
-			k0	<= (others => '0');
-			crack_begin <= '0';
-		elsif then
-
+			s0_axi_wready <= '0';
+			s0_axi_bresp  <= (others => '0');
+			p			  <= (others => '0');
+			c			  <= (others => '0');
+			k0			  <= (others => '0');
+			crack_begin	  <= '0';
 		else
-
+			case state_w is
+				when idle =>
+					if s0_axi_awvalid = '1' and s0_axi_wvalid = '1' then
+						s0_axi_awready <= '1';
+						s0_axi_wready  <= '1';
+						s0_axi_bvalid  <= '1';
+						s0_axi_bresp   <= axi_resp_okay;
+						if unsigned(s0_axi_awaddr) < x"004" then -- LSB's of p (plain text)
+							p(31 downto 0) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"008" then -- MSB's of p
+							p(63 downto 32) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"00c" then -- LSB's of c
+							c(31 downto 0) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"010" then -- MSB's of c
+							c(63 downto 32) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"014" then -- LSB's of k0
+							-- stop cracking machine
+							crack_end <= '1';
+							crack_begin <= '0';
+							k0(31 downto 0) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"018" then -- MSB's of k0
+							-- start cracking machine
+							crack_end <= '0';
+							crack_begin <= '1';
+							k0(63 downto 32) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"01c" then -- LSB's of k
+							k(31 downto 0) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"020" then -- MSB's of k
+							k(63 downto 32) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"024" then -- LSB's of k1
+							k1(31 downto 0) <= s0_axi_wdata;
+						if unsigned(s0_axi_awaddr) < x"028" then -- MSB's of k1
+							k1(63 downto 32) <= s0_axi_wdata;
+						else
+							s0_axi_awready <= '0';
+							s0_axi_wready <= '0';
+							s0_axi_bresp  <= axi_resp_decerr;
+						end if;
+						state_w <= waiting;
+					end if;
+				when waiting =>
+					if s0_axi_bready = '1' then
+						s0_axi_bvalid <= '0';
+						state_w <= idle;
+					end if;
+			end case;
 		end if;
 	end if;
 end process;
