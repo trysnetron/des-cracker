@@ -211,7 +211,7 @@ axi_write: process(aclk) begin
 
 						-- LSB's of k0 (starting key)
 						elsif unsigned(s0_axi_awaddr) < x"014" then 
-							-- stop cracking machine
+							-- Stop cracking machine
 							crack_end <= '1';
 							crack_begin <= '0';
 							k0(31 downto 0) <= s0_axi_wdata;
@@ -221,7 +221,7 @@ axi_write: process(aclk) begin
 							-- start cracking machine
 							crack_end <= '0';
 							crack_begin <= '1';
-							k0(55 downto 32) <= s0_axi_wdata(23 downto 0); -- ignore msb
+							k0(55 downto 32) <= s0_axi_wdata(23 downto 0); -- Ignore MSB
 
 						-- MSB's of k1 (found key)
 						elsif unsigned(s0_axi_awaddr) < x"028" then 
