@@ -30,3 +30,12 @@ compile:
 synt: compile
 	cd syn/
 	$(VIVADO) -mode batch -source des.syn.tcl -notrace -tclargs des_cracker	
+
+clean: 
+	rm -r .Xil/ .srcs/ des_cracker/
+	rm *.rpt
+	rm *.jou
+	rm *.log
+	rm *.html
+	rm *.xml
+	rm des_cracker.bit
