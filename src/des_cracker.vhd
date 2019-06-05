@@ -56,10 +56,10 @@ architecture rtl of des_cracker is
     signal k1  : std_ulogic_vector(55 downto 0); -- The found secret key    base adress: 0x020
 	signal k_local : std_ulogic_vector(55 downto 0); -- The current secret key 
 
-    constant axi_resp_okay		: std_ulogic_vector(1 downto 0) := "00";
-    constant axi_resp_exokay	: std_ulogic_vector(1 downto 0) := "01";
-    constant axi_resp_slverr	: std_ulogic_vector(1 downto 0) := "10";
-    constant axi_resp_decerr	: std_ulogic_vector(1 downto 0) := "11";
+    constant axi_resp_OKAY		: std_ulogic_vector(1 downto 0) := "00";
+    constant axi_resp_EXOKAY	: std_ulogic_vector(1 downto 0) := "01";
+    constant axi_resp_SLVERR	: std_ulogic_vector(1 downto 0) := "10";
+    constant axi_resp_DECERR	: std_ulogic_vector(1 downto 0) := "11";
 
 	signal crack_begin  : std_ulogic; -- Command to make engines begin checking keys
 	signal crack_end	: std_ulogic; -- Command to make engines stop
@@ -87,8 +87,8 @@ begin
 	
 	update_current_key: process(aclk)
 	begin
-		if rising_edge(clk) then
-			if(aresetn = 0) then
+		if rising_edge(aclk) then
+			if(aresetn = '0') then
 				k <= (others => '0');
 			elsif k_freeze = '0' then
 				k <= k_local;
@@ -105,14 +105,14 @@ axi_read: process(aclk) begin
 		if aresetn = '0' then
 			s0_axi_arready <= '0';
 			s0_axi_rdata   <= (others => '0');
-			s0_axi_rresp   <= axi_resp_okay;	
+			s0_axi_rresp   <= axi_resp_OKAY;	
 		else
 			case state_r is
 				when idle =>
 					if s0_axi_arvalid = '1' then 
 						s0_axi_arready <= '1';
 						s0_axi_rvalid  <= '1';
-						s0_axi_rresp  <= axi_resp_okay; -- change name of constants to cap. letters?
+						s0_axi_rresp  <= axi_resp_OKAY; 
 						
 						-- LSB's of p (plain text)
 						if unsigned(s0_axi_araddr) < x"004" then
@@ -160,7 +160,7 @@ axi_read: process(aclk) begin
 
 						else
 							s0_axi_rvalid <= '0';
-							s0_axi_rresp  <= axi_resp_decerr;
+							s0_axi_rresp  <= axi_resp_DECERR;
 						end if;
 						state_r <= waiting;
 					end if;
@@ -191,7 +191,7 @@ axi_write: process(aclk) begin
 						s0_axi_awready <= '1';
 						s0_axi_wready  <= '1';
 						s0_axi_bvalid  <= '1';
-						s0_axi_bresp   <= axi_resp_okay;
+						s0_axi_bresp   <= axi_resp_OKAY;
 
 						-- LSB's of p (plain text)
 						if unsigned(s0_axi_awaddr) < x"004" then
@@ -225,13 +225,13 @@ axi_write: process(aclk) begin
 
 						-- MSB's of k1 (found key)
 						elsif unsigned(s0_axi_awaddr) < x"028" then 
-							s0_axi_bresp  <= axi_resp_slverr; -- Registers k and k1 are read-only
+							s0_axi_bresp  <= axi_resp_SLVERR; -- Registers k and k1 are read-only
 
 						
 						else
 							s0_axi_awready <= '0';
 							s0_axi_wready <= '0';
-							s0_axi_bresp  <= axi_resp_decerr;
+							s0_axi_bresp  <= axi_resp_DECERR;
 						end if;
 						state_w <= waiting;
 					end if;

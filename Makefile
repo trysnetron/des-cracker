@@ -29,4 +29,4 @@ compile:
 
 synt: compile
 	cd syn/
-	$(VIVADO) -mode batch -source ../des_syn.tcl -notrace -tclargs des_cracker	
+	$(VIVADO) -mode batch -source des.syn.tcl -notrace -tclargs des_cracker	

@@ -3,79 +3,120 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity des_cracker_sim is
-    generic(
-        frequency_mhz: positive := 1
-    );
     port(
-        s0_axi_arready: out std_ulogic;
-        s0_axi_awready: out std_ulogic;
-        s0_axi_wready:  out std_ulogic;
-        s0_axi_rdata:   out std_ulogic_vector(31 downto 0);
-        s0_axi_rresp:   out std_ulogic_vector(1 downto 0);
-        s0_axi_rvalid:  out std_ulogic;
-        s0_axi_bresp:   out std_ulogic_vector(1 downto 0);
-        s0_axi_bvalid:  out std_ulogic;
         irq:            out std_ulogic;
         led:            out std_ulogic_vector(3 downto 0)
     );
 end entity des_cracker_sim;
 
 architecture sim of des_cracker_sim is
+
+    subtype w12 is std_ulogic_vector(32 downto 0);
     constant period:       time := (1.0e3 * 1 ns) / real(frequency_mhz);
 
-    signal aclk:           std_ulogic;
-    signal aresetn:        std_ulogic;
-    signal s0_axi_araddr:  std_ulogic_vector(11 downto 0);
-    signal s0_axi_arvalid: std_ulogic;
-    signal s0_axi_awaddr:  std_ulogic_vector(11 downto 0);
-    signal s0_axi_awvalid: std_ulogic;
-    signal s0_axi_wdata:   std_ulogic_vector(31 downto 0);
-    signal s0_axi_wstrb:   std_ulogic_vector(3 downto 0);
-    signal s0_axi_wvalid:  std_ulogic;
-    signal s0_axi_rready:  std_ulogic;
-    signal s0_axi_ready:   std_ulogic;
-    signal s0_axi_bready:  std_ulogic;
+    signal aclk           : std_ulogic;        
+    signal aresetn        : std_ulogic; 
+    -- Read address channel signals
+    signal araddr  : std_ulogic_vector(11 downto 0); 
+    signal arvalid : std_ulogic;                     
+    signal arready : std_ulogic;                     
+    -- Write address channel signals
+    signal awaddr  : std_ulogic_vector(11 downto 0); 
+    signal awvalid : std_ulogic;                     
+    signal awready : std_ulogic;                     
+    -- Write data channel signals
+    signal wdata   : std_ulogic_vector(31 downto 0); 
+    signal wstrb   : std_ulogic_vector(3 downto 0);
+    signal wvalid  : std_ulogic;                  
+    signal wready  : std_ulogic;                 
+    -- Read data channel signals
+    signal rdata   : std_ulogic_vector(31 downto 0); 
+    signal rresp   : std_ulogic_vector(1 downto 0);  
+    signal rvalid  : std_ulogic;                    
+    signal rready  : std_ulogic;                     
+    -- Write response channel signals
+    signal bresp   : std_ulogic_vector(1 downto 0);  
+    signal bvalid  : std_ulogic;                     
+    signal bready  : std_ulogic;                     
+
+    constant addr_p_lsb : w12 := std_ulogic_vector(to_unsigned(x"004"), 12);  
+    constant addr_p_msb : w12 := std_ulogic_vector(to_unsigned(x"008"), 12); 
+    constant addr_c_lsb : w12 := std_ulogic_vector(to_unsigned(x"00c"), 12);
+    constant addr_c_msb : w12 := std_ulogic_vector(to_unsigned(x"010"), 12);
+    constant addr_k0_lsb: w12 := std_ulogic_vector(to_unsigned(x"014"), 12);
+    constant addr_k0_msb: w12 := std_ulogic_vector(to_unsigned(x"018"), 12);
+    constant addr_k_lsb : w12 := std_ulogic_vector(to_unsigned(x"01c"), 12);
+    constant addr_k_msb : w12 := std_ulogic_vector(to_unsigned(x"020"), 12);  
+    constant addr_k1_ls : w12 := std_ulogic_vector(to_unsigned(x"024"), 12);
+    constant addr_k1_msb: w12 := std_ulogic_vector(to_unsigned(x"028"), 12);
+
+    constant axi_resp_OKAY	: std_ulogic_vector(1 downto 0) := "00";
+    constant axi_resp_EXOKAY	: std_ulogic_vector(1 downto 0) := "01";
+    constant axi_resp_SLVERR	: std_ulogic_vector(1 downto 0) := "10";
+    constant axi_resp_DECERR	: std_ulogic_vector(1 downto 0) := "11";
 
     procedure axi_read(
-        -- signal clk:         in std_ulogic;
-        signal addr:        in natural; 
-        signal data:        out std_ulogic_vector(31 downto 0);
-        signal resp:        out std_ulogic_vector(1 downto 0);
-        signal axi_arready: in std_ulogic; 
-        signal axi_arvalid: out std_ulogic;
-        signal axi_araddr:  out std_ulogic_vector(11 downto 0);
-        signal axi_rready:  out std_ulogic;
-        signal axi_rvalid:  in std_ulogic;
-        signal axi_rdata:   in std_ulogic_vector(31 downto 0);
-        signal axi_rresp:   in std_ulogic_vector(1 downto 0)
+        -- function input
+        signal aclk:     in  std_ulogic;
+        signal address:  in  w12;
+        -- master --> slave 
+        signal address_v:out std_ulogic;
+        signal araddr:   out w12;
+        signal rready:   out std_ulogic;
+        signal arready:  out std_ulogic; 
+        -- slave --> master
+        signal rvalid:   in  std_ulogic;
+        signal rdata:    in  std_ulogic_vector(31 downto 0);
+        signal rresp:    in  std_ulogic_vector(1 downto 0)
+        -- function output
+        signal data:     out std_ulogic_vector(31 downto 0);
+        signal response: out std_ulogic_vector(1 downto 0);
         ) is
     begin
-        axi_araddr  <= std_ulogic_vector(to_unsigned(addr, 12));
-        axi_arvalid <= '1';
-        wait until rising_edge(aclk) and axi_arready = '1';
-        axi_arvalid <= '0';
-        wait until rising_edge(aclk) and axi_rvalid = '1';
-        axi_rready <= '1';
-        data <= axi_rdata;
-        resp <= axi_rresp;
-        axi_rready <= '0';
+        -- set the address we want to read from in   araddr
+        araddr <= address;
+        -- set address valid high                   arvalid
+        arvalid <= '1';
+        -- wait for acknowledge                     arready
+        wait until rising_edge(aclk) and arready = '1';
+        -- set read response acknowledge high
+        rready <= '1';
+        -- fetch data and response
+        data     <= rdata;
+        response <= rresp;
+        -- set read-ready-acknowledge low
+        rready <= '0';
     end procedure axi_read;
 
     procedure axi_write(
-        -- signal aclk: in std_ulogic;
-        signal addr: in natural; 
-        signal data: out std_ulogic_vector(31 downto 0);
-        signal resp: out std_ulogic_vector(1 downto 0);
-        signal axi_awready: in std_ulogic; 
-        signal axi_awvalid: out std_ulogic;
-        signal axi_awaddr: out std_ulogic_vector(11 downto 0);
-        signal axi_wready: out std_ulogic;
-        signal axi_wvalid: in std_ulogic;
-        signal axi_wdata: in std_ulogic_vector(31 downto 0)
+        -- function input
+        signal aclk: in std_ulogic;
+        signal address: in natural; 
+        signal data: in std_ulogic_vector(31 downto 0);
+        -- master --> slave
+        signal awaddr: out std_ulogic_vector(11 downto 0);
+        signal awvalid: out std_ulogic;
+        signal wdata: out std_ulogic_vector(31 downto 0)
+        signal wstrb: out std_ulogic_vector(3 downto 0)
+        signal wvalid: out std_ulogic;
+        signal bready: out  std_ulogic;
+        -- slave --> master
+        signal awready: in std_ulogic; 
+        signal bresp: in std_ulogic_vector(1 downto 0)
+        signal bvalid: in std_ulogic;
+        -- function output
+        signal response: out std_ulogic_vector(1 downto 0);
+        signal wready: out std_ulogic;
         ) is
     begin
-        
+        -- set the address we want to write to in awaddr
+        -- set address valid high
+        -- put data in wdata field
+        -- set write byte enable
+        -- set write data and bye enable
     end procedure axi_write;
+
+
 begin
 
     process
@@ -157,6 +198,28 @@ begin
         s0_axi_wvalid <= '0';
 
     end process;
+
+-- TESTS THAT NEED TO BE DONE
+    -- Check that SM starts correctly
+    -- Check that SM stops correctly
+    -- READ
+        -- works when given correct address
+        -- returns decerr when given wrong address
+        -- freezing of k works as it is supposed to
+    -- WRITE
+        -- works correctly when given correct address
+        -- returns slverr when one tries to access addresses that are read-only
+        -- returns decerr when given wrong address
+
+
+
+
+
+
+
+
+
+
 
     -- Submit random AXI4 lite requests
     --process
