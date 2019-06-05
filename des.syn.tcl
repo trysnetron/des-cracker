@@ -10,6 +10,7 @@
 #
 
 # EDIT THIS
+# Dette er fasiten
 
 array set ios {
   led[0] { M14 LVCMOS33 }
@@ -19,6 +20,7 @@ array set ios {
 }
 set frequency_mhz 100
 
+
 # DO NOT MODIFY ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING
 
 set board [get_board_parts digilentinc.com:zybo*]
@@ -26,7 +28,7 @@ set part xc7z010clg400-1
 
 proc usage {} {
   puts "
-usage: vivado -mode batch -source <script> [-tclargs <design>]
+usage: vivado -mode batch -source <script> [-tclargs <design> [<frequency_mhz>]]
   <script>: TCL script
   <design>: name of top entity and basename of the VHDL source file
             optional, defaults to basename of <script>"
@@ -34,10 +36,14 @@ usage: vivado -mode batch -source <script> [-tclargs <design>]
 }
 
 set script [file normalize [info script]]
-set src "/homes/sandvik/des-cracker/src"
+set src [file dirname [file dirname $script]]
+puts $src
 regsub {\..*} [file tail $script] "" design
 
-if { $argc == 1 } {
+if { $argc == 2 } {
+	set frequency_mhz [lindex $argv 1]
+	set design [lindex $argv 0]
+} elseif { $argc == 1 } {
   set design [lindex $argv 0]
 } elseif { $argc != 0 } {
   usage
@@ -58,10 +64,10 @@ puts "*********************************************"
 #############
 set_part $part
 set_property board_part $board [current_project]
-read_vhdl $src/des_pkg.vhd
-read_vhdl $src/des_key_checker.vhd
-read_vhdl $src/des_sm.vhd
-read_vhdl $src/des_cracker.vhd
+read_vhdl $src/des-cracker/src/des_pkg.vhd
+read_vhdl $src/des-cracker/src/des_key_checker.vhd
+read_vhdl $src/des-cracker/src/des_sm.vhd
+read_vhdl $src/des-cracker/src/des_cracker.vhd
 ipx::package_project -import_files -root_dir $design -vendor www.telecom-paristech.fr -library DS -force $design
 close_project
 
@@ -74,7 +80,6 @@ set_property ip_repo_paths [list ./$design] [current_fileset]
 update_ip_catalog
 create_bd_design $design
 set ip [create_bd_cell -type ip -vlnv [get_ipdefs *www.telecom-paristech.fr:DS:$design:*] $design]
-set_property -dict [list CONFIG.frequency_mhz $frequency_mhz CONFIG.start_us $start_us CONFIG.warm_us $warm_us] $ip
 set ps7 [create_bd_cell -type ip -vlnv [get_ipdefs *xilinx.com:ip:processing_system7:*] ps7]
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" apply_board_preset "1" Master "Disable" Slave "Disable" } $ps7
 set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ $frequency_mhz] $ps7
@@ -83,8 +88,6 @@ set_property -dict [list CONFIG.PCW_M_AXI_GP0_ENABLE_STATIC_REMAP {1}] $ps7
 
 # Interconnections
 # Primary IOs
-create_bd_port -dir IO -type data data
-connect_bd_net [get_bd_pins /$design/data] [get_bd_ports data]
 create_bd_port -dir O -type data -from 3 -to 0 led
 connect_bd_net [get_bd_pins /$design/led] [get_bd_ports led]
 # ps7 - ip
@@ -110,9 +113,9 @@ foreach io [ array names ios ] {
 
 # Clocks and timing
 set clock [get_clocks]
-set_false_path -from $clock -to [get_ports data]
+#set_false_path -from $clock -to [get_ports data]
 set_false_path -from $clock -to [get_ports led[*]]
-set_false_path -from [get_ports data] -to $clock
+#set_false_path -from [get_ports data] -to $clock
 
 # Implementation
 opt_design
