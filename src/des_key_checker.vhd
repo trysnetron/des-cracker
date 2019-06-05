@@ -24,23 +24,28 @@ end entity des_key_checker;
 architecture rtl of des_key_checker is
     
     signal engine_complete  : std_ulogic;
+    signal complete_local   : std_ulogic;
     signal cipher_txt       : w64;
 
 begin 
-    
+   
+    complete <= complete_local;
+
     check_cipher_text: process(clk)
     begin
-        if sresetn = '0' then 
-            complete    <= '0';
-            check       <= '0';
-        else
-            if engine_complete = '1' then
-                if cipher_txt = correct_txt then
-                    check <= '1';
-                else
-                    check <= '0';
+        if rising_edge(clk) then
+            complete_local <= '0';
+            if sresetn = '0' then 
+                check <= '0';
+            else
+                if engine_complete = '1' then
+                    if cipher_txt = correct_txt then
+                        check <= '1';
+                    else
+                        check <= '0';
+                    end if;
+                    complete_local <= '1';
                 end if;
-                complete <= '1';
             end if;
         end if;
     end process;
@@ -53,7 +58,7 @@ begin
             if sresetn = '0' then
                 cipher_txt      <= (others => '0');
                 engine_complete <= '0';
-            elsif complete /= '1' then
+            elsif complete_local /= '1' then
                 sk := sub_key_gen(key); -- generates all subkeys for 16 iterations
                 acc := ip(plain_txt);   -- initial permutation of plain text.
                 for i in 0 to 15 loop

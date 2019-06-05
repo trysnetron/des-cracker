@@ -171,10 +171,7 @@ package body des_pkg is
 	function increment_key(key:w56; N:natural) return w56 is 
 		variable result : unsigned(1 to 56);
 	begin
-		result := unsigned(key);
-		for i in 1 to N loop
-			result := result + '1';
-		end loop;
+		result := unsigned(key) + N;
 		return std_ulogic_vector(result);
 	end function increment_key;
 

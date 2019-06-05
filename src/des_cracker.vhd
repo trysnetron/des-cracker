@@ -53,7 +53,7 @@ architecture rtl of des_cracker is
     signal c   : std_ulogic_vector(63 downto 0); -- The ciphertext          base adress: 0x008
     signal k0  : std_ulogic_vector(55 downto 0); -- The starting secret key base adress: 0x010
     signal k   : std_ulogic_vector(55 downto 0); -- The current secret key  base adress: 0x018
-    signal k1  : std_ulogic_vector(56 downto 0); -- The found secret key    base adress: 0x020
+    signal k1  : std_ulogic_vector(55 downto 0); -- The found secret key    base adress: 0x020
 	signal k_local : std_ulogic_vector(55 downto 0); -- The current secret key 
 
     constant axi_resp_okay		: std_ulogic_vector(1 downto 0) := "00";
@@ -76,6 +76,7 @@ begin
         clk         => aclk,    
         sresetn     => aresetn,
         crck_begin  => crack_begin,
+		crck_end	=> crack_end,
         plain_txt   => p,
         cipher_txt  => c,
         start_key   => k0,
@@ -83,11 +84,23 @@ begin
 		current_key => k_local,
         sm_complete => crack_compl
     );
+	
+	update_current_key: process(aclk)
+	begin
+		if rising_edge(clk) then
+			if(aresetn = 0) then
+				k <= (others => '0');
+			elsif k_freeze = '0' then
+				k <= k_local;
+			end if;
+		end if;
+	end process update_current_key;
 
-	k <= k_local when k_freeze = '0';
+	led <= "1010";
+	irq <= '0';
 
 -- Read process.
-process(aclk) begin
+axi_read: process(aclk) begin
 	if rising_edge(aclk) then
 		if aresetn = '0' then
 			s0_axi_arready <= '0';
@@ -100,29 +113,51 @@ process(aclk) begin
 						s0_axi_arready <= '1';
 						s0_axi_rvalid  <= '1';
 						s0_axi_rresp  <= axi_resp_okay; -- change name of constants to cap. letters?
-						if unsigned(s0_axi_araddr) < x"004" then -- LSB's of p (plain text)
+						
+						-- LSB's of p (plain text)
+						if unsigned(s0_axi_araddr) < x"004" then
 							-- Unsure what is MSB and LSB
 							s0_axi_rdata <= p(31 downto 0);
-						if unsigned(s0_axi_araddr) < x"008" then -- MSB's of p
+
+						-- MSB's of p (plain text)
+						elsif unsigned(s0_axi_araddr) < x"008" then 
 							s0_axi_rdata <= p(63 downto 32);
-						if unsigned(s0_axi_araddr) < x"00c" then -- LSB's of c
+
+						-- LSB's of c (cipher text)
+						elsif unsigned(s0_axi_araddr) < x"00c" then 
 							s0_axi_rdata <= c(31 downto 0);
-						if unsigned(s0_axi_araddr) < x"010" then -- MSB's of c
+
+						-- MSB's of c (cipher text)
+						elsif unsigned(s0_axi_araddr) < x"010" then 
 							s0_axi_rdata <= c(63 downto 32);
-						if unsigned(s0_axi_araddr) < x"014" then -- LSB's of k0
+
+						-- LSB's of k0 (starting key)
+						elsif unsigned(s0_axi_araddr) < x"014" then 
 							s0_axi_rdata <= k0(31 downto 0);
-						if unsigned(s0_axi_araddr) < x"018" then -- MSB's of k0
-							s0_axi_rdata <= k0(63 downto 32);
-						if unsigned(s0_axi_araddr) < x"01c" then -- LSB's of k
+
+						-- MSB's of k0 (starting key)
+						elsif unsigned(s0_axi_araddr) < x"018" then
+							s0_axi_rdata <= k0(55 downto 32) & "00000000";
+
+						-- LSB's of k (current key)
+						elsif unsigned(s0_axi_araddr) < x"01c" then 
 							s0_axi_rdata <= k(31 downto 0);
 							k_freeze <= '1'; -- k needs to be frozen
-						if unsigned(s0_axi_araddr) < x"020" then -- MSB's of k
-							s0_axi_rdata <= k(63 downto 32);
+
+						-- MSB's of k (current key)
+						elsif unsigned(s0_axi_araddr) < x"020" then 
+							s0_axi_rdata <= k(55 downto 32) & "00000000";
 							k_freeze <= '0'; -- k needs to be unfrozen
-						if unsigned(s0_axi_araddr) < x"024" then -- LSB's of k1
+
+						-- LSB's of k1 (found key)
+						elsif unsigned(s0_axi_araddr) < x"024" then 
 							s0_axi_rdata <= k1(31 downto 0);
-						if unsigned(s0_axi_araddr) < x"028" then -- MSB's of k1
-							s0_axi_rdata <= k1(63 downto 32);
+
+						-- MSB's of k1 (found key)
+						elsif unsigned(s0_axi_araddr) < x"028" then 
+							s0_axi_rdata <= k1(55 downto 32) & "00000000";
+
+
 						else
 							s0_axi_rvalid <= '0';
 							s0_axi_rresp  <= axi_resp_decerr;
@@ -140,7 +175,7 @@ process(aclk) begin
 end process;
 
 -- Write process
-process(aclk) begin
+axi_write: process(aclk) begin
 	if rising_edge(aclk) then
 		if aresetn = '0' then
 			s0_axi_wready <= '0';
@@ -157,32 +192,42 @@ process(aclk) begin
 						s0_axi_wready  <= '1';
 						s0_axi_bvalid  <= '1';
 						s0_axi_bresp   <= axi_resp_okay;
-						if unsigned(s0_axi_awaddr) < x"004" then -- LSB's of p (plain text)
+
+						-- LSB's of p (plain text)
+						if unsigned(s0_axi_awaddr) < x"004" then
 							p(31 downto 0) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"008" then -- MSB's of p
+
+						-- MSB's of p (plain text)
+						elsif unsigned(s0_axi_awaddr) < x"008" then 
 							p(63 downto 32) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"00c" then -- LSB's of c
+			
+						-- LSB's of c (cipher text)
+						elsif unsigned(s0_axi_awaddr) < x"00c" then 
 							c(31 downto 0) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"010" then -- MSB's of c
+
+						-- MSB's of c (cipher text)
+						elsif unsigned(s0_axi_awaddr) < x"010" then 
 							c(63 downto 32) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"014" then -- LSB's of k0
+
+						-- LSB's of k0 (starting key)
+						elsif unsigned(s0_axi_awaddr) < x"014" then 
 							-- stop cracking machine
 							crack_end <= '1';
 							crack_begin <= '0';
 							k0(31 downto 0) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"018" then -- MSB's of k0
+
+						-- MSB's of k0 (starting key)
+						elsif unsigned(s0_axi_awaddr) < x"018" then 
 							-- start cracking machine
 							crack_end <= '0';
 							crack_begin <= '1';
-							k0(63 downto 32) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"01c" then -- LSB's of k
-							k(31 downto 0) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"020" then -- MSB's of k
-							k(63 downto 32) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"024" then -- LSB's of k1
-							k1(31 downto 0) <= s0_axi_wdata;
-						if unsigned(s0_axi_awaddr) < x"028" then -- MSB's of k1
-							k1(63 downto 32) <= s0_axi_wdata;
+							k0(55 downto 32) <= s0_axi_wdata(23 downto 0); -- ignore msb
+
+						-- MSB's of k1 (found key)
+						elsif unsigned(s0_axi_awaddr) < x"028" then 
+							s0_axi_bresp  <= axi_resp_slverr; -- Registers k and k1 are read-only
+
+						
 						else
 							s0_axi_awready <= '0';
 							s0_axi_wready <= '0';

@@ -48,12 +48,11 @@ architecture rtl of des_sm is
     signal complete2        : std_ulogic;
 
 begin
-    /* 
-    The thought is that we instantiate N key-checkers that start checking the  
-    the start_key and the first N-1 keys after start_key. If every checker fails, 
-    the keys are incremented by N, and the key-checkers continue checking keys. 
-    If one checker succeds all the checkers are stopped. 
-    */
+     
+    -- The thought is that we instantiate N key-checkers that start checking the  
+    -- the start_key and the first N-1 keys after start_key. If every checker fails, 
+    -- the keys are incremented by N, and the key-checkers continue checking keys. 
+    -- If one checker succeds all the checkers are stopped. 
     k2 <= increment_key(k,1);
     complete <= complete1 and complete2;
     check <= check1 or check2;
