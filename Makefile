@@ -27,6 +27,12 @@ compile:
 	$(VMAP) work work
 	$(VCOM) -2008 -work work src/des_pkg.vhd src/des_key_checker.vhd src/des_sm.vhd src/des_cracker.vhd
 
+simulate: 
+	$(VLIB) work
+	$(VMAP) work work
+	$(VCOM) -2008 -work work src/des_pkg.vhd src/des_key_checker.vhd src/des_sm.vhd src/des_cracker.vhd src/sim_des_cracker.vhd
+	$(VSIM) des_cracker_sim
+
 synt: compile
 	cd syn/
 	$(VIVADO) -mode batch -source des.syn.tcl -notrace -tclargs des_cracker	
