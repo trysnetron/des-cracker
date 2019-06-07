@@ -8,10 +8,29 @@ VSIM = $(MODELSIMPATH)/vsim
 VIVADO = $(VIVADOPATH)/vivado
 
 WORKDIR = gh_work
-SOURCE = src/des_pkg.vhd
-SIM = src/des_sim.vhd
 
-validate:
+# Source files, listed in order of compilation (it matters)
+LST = des_pkg \
+			des_engine \
+			des_key_checker \
+			des_sm \
+			des_cracker
+
+SRC = $(patsubst %,src/%.vhd,$(LST))
+SIM = $(patsubst %,src/sim_%.vhd,$(LST))
+
+
+analyze-gh:
+	ghdl -a --std=08 --workdir=gh_work $(SRC) $(SIM)
+
+check-gh: analyze-gh
+	ghdl -r --std=08 --workdir=$(WORKDIR) des_pkg_sim sim
+	ghdl -r --std=08 --workdir=$(WORKDIR) des_engine_sim sim
+	ghdl -r --std=08 --workdir=$(WORKDIR) des_key_checker_sim sim
+	ghdl -r --std=08 --workdir=$(WORKDIR) des_sm_sim sim
+	ghdl -r --std=08 --workdir=$(WORKDIR) des_cracker_sim sim
+
+validate-gh:
 	ghdl -a --std=08 --workdir=gh_work src/des_pkg.vhd src/des_pkg_sim.vhd src/des_cracker.vhd src/des_cracker_sim.vhd
 	ghdl -r --std=08 --workdir=$(WORKDIR) des_pkg_sim sim --vcd=$(WORKDIR)/wf.vcd
 
@@ -39,3 +58,4 @@ clean:
 	rm *.html
 	rm *.xml
 	rm des_cracker.bit
+	rm $(WORKDIR)
