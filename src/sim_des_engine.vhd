@@ -46,7 +46,7 @@ begin
         clk <= '1';
         wait for period / 2.0;
 
-        finish(2);
+        finish(0);
     end process;
 
     engine: entity work.des_engine16(rtl)
