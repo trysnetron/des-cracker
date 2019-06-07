@@ -137,7 +137,7 @@ architecture sim of des_cracker_sim is
         signal response:out std_ulogic_vector(1 downto 0)
         ) is
     begin
-        -- set the address we want to write to in awaddr
+        -- set the aprocedure axi_write address we want to write to in awaddr
         awaddr <= address;
         -- set address valid flag awvalid high 
         awvalid <= '1';
@@ -167,25 +167,26 @@ architecture sim of des_cracker_sim is
 
 begin
 
-    -- axi_read: process(aclk)
-    -- begin
-    --     axi_read(
-    --         -- function input
-    --         aclk        => aclk, 
-    --         address     => read_address,
-    --         -- master --> slave
-    --         araddr      => araddr,
-    --         address_v   => arvalid,
-    --         arready     => arready,
-    --         -- slave --> master
-    --         rvalid      => rvalid,
-    --         rdata       => rdata,
-    --         rresp       => rresp,
-    --         -- function output
-    --         data        => read_data,
-    --         response    => read_response
-    --     );    
-    -- end process axi_read;
+    axi_read: process(read_address)
+    begin
+        axi_read(
+            -- function input
+            aclk        => axi_aclk, 
+            address     => read_address,
+            -- master --> saxi_lave
+            araddr      => axi_araddr,
+            address_v   => axi_arvalid,
+            arready     => axi_arready,
+            -- slave --> maaxi_ster
+            rvalid      => axi_rvalid,
+            rdata       => axi_rdata,
+            rresp       => axi_rresp,
+            -- function outaxi_put
+            data        => read_data,
+            response    => read_response
+        );    
+    end process axi_read;
+    
     -- axi_write: process(aclk)
     -- begin
     --     axi_write(
@@ -251,7 +252,26 @@ begin
 
     tests: process
     begin
-        report "I am a failure";
+        axi_write(
+        -- function input
+        signal aclk:    in  std_ulogic;
+        signal address: in  w12; 
+        signal data:    in  std_ulogic_vector(31 downto 0);
+        -- master --> slave
+        signal awaddr:  out std_ulogic_vector(11 downto 0);
+        signal awvalid: out std_ulogic;
+        signal wdata:   out std_ulogic_vector(31 downto 0);
+        signal wstrb:   out std_ulogic_vector(3 downto 0);
+        signal wvalid:  out std_ulogic;
+        signal bready:  out std_ulogic;
+        -- slave --> master
+        signal awready: in  std_ulogic; 
+        signal bresp:   in  std_ulogic_vector(1 downto 0);
+        signal bvalid:  in  std_ulogic;
+        signal wready:  in  std_ulogic;
+        -- function output
+        signal response:out std_ulogic_vector(1 downto 0)
+        )
         finish(0);
     end process tests;
 -- TESTS THAT NEED TO BE DONE
