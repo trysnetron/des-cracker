@@ -11,9 +11,6 @@ use ieee.numeric_std.all;
 use std.env.all;
 
 entity des_cracker_sim is
-    generic(
-        frequency_mhz: positive range 1 to 1000
-    );
     port(
         irq:            out std_ulogic;
         led:            out std_ulogic_vector(3 downto 0)
@@ -28,7 +25,7 @@ architecture sim of des_cracker_sim is
     subtype w64 is std_ulogic_vector(63 downto 0);
     
     -- Constants
-    constant period:       time := (1.0e3 * 1 ns) / real(frequency_mhz);
+    constant period:       time :=  1 ns;
 
     constant addr_p_lsb : w12 := x"000"; 
     constant addr_p_msb : w12 := x"004";
@@ -98,6 +95,7 @@ architecture sim of des_cracker_sim is
         signal response: out std_ulogic_vector(1 downto 0)
         ) is
     begin
+        wait on address;
         -- set the address we want to read from in   araddr
         araddr <= address;
         -- set address valid high                   arvalid
@@ -137,7 +135,8 @@ architecture sim of des_cracker_sim is
         signal response:out std_ulogic_vector(1 downto 0)
         ) is
     begin
-        -- set the aprocedure axi_write address we want to write to in awaddr
+        wait on address;
+        -- set the procedure axi_write address we want to write to in awaddr
         awaddr <= address;
         -- set address valid flag awvalid high 
         awvalid <= '1';
@@ -167,49 +166,40 @@ architecture sim of des_cracker_sim is
 
 begin
 
-    axi_read: process(read_address)
+    axi_read_proc: process
     begin
         axi_read(
-            -- function input
-            aclk        => axi_aclk, 
-            address     => read_address,
-            -- master --> saxi_lave
-            araddr      => axi_araddr,
-            address_v   => axi_arvalid,
-            arready     => axi_arready,
-            -- slave --> maaxi_ster
-            rvalid      => axi_rvalid,
-            rdata       => axi_rdata,
-            rresp       => axi_rresp,
-            -- function outaxi_put
-            data        => read_data,
-            response    => read_response
-        );    
-    end process axi_read;
+            axi_aclk, 
+            read_address,
+            axi_araddr,
+            axi_arvalid,
+            axi_rready,
+            axi_arready,
+            axi_rvalid,
+            axi_rdata,
+            axi_rresp,
+            read_data,
+            read_response);    
+    end process axi_read_proc;
     
-    -- axi_write: process(aclk)
-    -- begin
-    --     axi_write(
-    --         -- function input
-    --         aclk        => aclk, 
-    --         address     => write_address, 
-    --         data        => write_data, 
-    --         -- master --> slave
-    --         awaddr      => awaddr,
-    --         awvalid     => 
-    --         wdata       => 
-    --         wstrb       => 
-    --         wvalid      => 
-    --         bready      => 
-    --         -- slave --> master
-    --         awready     => 
-    --         bresp       => 
-    --         bvalid      => 
-    --         wready      => 
-    --         -- function output
-    --         response    => write_response
-    --     );
-    -- end process axi_write;
+    axi_write_proc: process
+    begin
+        axi_write(
+            axi_aclk, 
+            write_address,
+            write_data,
+            axi_awaddr,
+            axi_awvalid,
+            axi_wdata,
+            axi_wstrb,
+            axi_wvalid,
+            axi_bready,
+            axi_awready,
+            axi_bresp,
+            axi_bvalid,
+            axi_wready,
+            write_response);    
+    end process axi_write_proc;
 
     clock_process: process
     begin
@@ -250,29 +240,27 @@ begin
         led            => led
     );
 
+    --signal read_address:    w12;
+    --signal read_data:       w32;
+    --signal read_response:   std_ulogic_vector(1 downto 0);
+
+    --signal write_address:   w12;
+    --signal write_data:      w32;
+    --signal write_response:  std_ulogic_vector(1 downto 0); 
+
     tests: process
+        -- Test 1
+        constant test_1_value: w32 := x"12345678"; 
+        variable test1_read_val: w32;
     begin
-        axi_write(
-        -- function input
-        signal aclk:    in  std_ulogic;
-        signal address: in  w12; 
-        signal data:    in  std_ulogic_vector(31 downto 0);
-        -- master --> slave
-        signal awaddr:  out std_ulogic_vector(11 downto 0);
-        signal awvalid: out std_ulogic;
-        signal wdata:   out std_ulogic_vector(31 downto 0);
-        signal wstrb:   out std_ulogic_vector(3 downto 0);
-        signal wvalid:  out std_ulogic;
-        signal bready:  out std_ulogic;
-        -- slave --> master
-        signal awready: in  std_ulogic; 
-        signal bresp:   in  std_ulogic_vector(1 downto 0);
-        signal bvalid:  in  std_ulogic;
-        signal wready:  in  std_ulogic;
-        -- function output
-        signal response:out std_ulogic_vector(1 downto 0)
-        )
-        finish(0);
+        -- TEST 1 write to p LSB, and read from p LSB, should be the same
+        write_data <= test_1_value;
+        write_address <= addr_p_lsb;
+        wait until axi_bready = '1';
+        read_address <= addr_p_lsb;
+        wait on axi_rresp;
+        assert read_data = test_1_value report "TEST 1 write to reg, then read it failed" severity error; 
+        finish(2);
     end process tests;
 -- TESTS THAT NEED TO BE DONE
     -- Check that SM starts correctly
