@@ -177,7 +177,7 @@ package body des_pkg is
 	begin
 		single_key := unsigned(start_key);
 		for i in 1 to nr_engines loop
-			result(i) := std_ulogic_vector(single_key + to_unsigned(i - 1),56);
+			result(i) := std_ulogic_vector(single_key + to_unsigned(i - 1,56));
 		end loop fill_in_keys;
 		return result;
 	end function initiate_keys;
@@ -190,10 +190,10 @@ package body des_pkg is
 	begin
 		for i in 1 to nr_engines loop
 			single_key := unsigned(keys(i));
-			if single_key + to_unsigned(nr_engines) > highest_key then -- Check if we have passed the highest possible key
-				result(i) := std_ulogic_vector(to_unsigned(nr_engines) - (highest_key - single_key),56);
+			if single_key + to_unsigned(nr_engines,56) > highest_key then -- Check if we have passed the highest possible key
+				result(i) := std_ulogic_vector(to_unsigned(nr_engines,56) - (highest_key - single_key));
 			else
-				result(i) := std_ulogic_vector(single_key + to_unsigned(nr_engines),56);
+				result(i) := std_ulogic_vector(single_key + to_unsigned(nr_engines,56));
 			end if;
 		end loop fill_in_keys;
 		return result;
