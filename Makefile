@@ -36,12 +36,16 @@ compile:
 	$(VMAP) work $(MS_WD)
 	$(VCOM) -2008 -work $(MS_WD) $(SRC) $(SIMSRC) 
 
+
 # Run all tests in the terminal (doesn't open ModelSim GUI)
 check: compile
 	$(VSIM) -c -do "run -all; quit;" $(SIM) 
 
 sim: compile
 	$(VSIM) des_cracker_sim
+
+sim_%: compile
+	$(VSIM) $*_sim
 
 syn: compile
 	cd syn/

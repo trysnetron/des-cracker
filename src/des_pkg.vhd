@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 package des_pkg is
     subtype w4 is std_ulogic_vector(1 to 4);
     subtype w6 is std_ulogic_vector(1 to 6);
+	subtype w12 is std_ulogic_vector(1 to 12);
     subtype w28 is std_ulogic_vector(1 to 28);
     subtype w32 is std_ulogic_vector(1 to 32);
     subtype w48 is std_ulogic_vector(1 to 48);

@@ -1,14 +1,8 @@
---------------------------------------------------
---                                              --
---  Testbench for DES Cracker                   --
---  By Yohann Jacob Sandvik and Trym Sneltvedt  --
---                                              --
---------------------------------------------------
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.env.all;
+use work.des_pkg.all;
 
 entity des_cracker_sim is
     port(
@@ -18,13 +12,7 @@ entity des_cracker_sim is
 end entity des_cracker_sim;
 
 architecture sim of des_cracker_sim is
-    -- Typedefs
-    subtype w12 is std_ulogic_vector(11 downto 0);
-    subtype w32 is std_ulogic_vector(31 downto 0);
-    subtype w56 is std_ulogic_vector(55 downto 0);
-    subtype w64 is std_ulogic_vector(63 downto 0);
-    
-    -- Constants
+
     constant period:       time :=  1 ns;
 
     constant addr_p_lsb : w12 := x"000"; 
@@ -49,77 +37,24 @@ architecture sim of des_cracker_sim is
     constant wrong_key2 : w56 := "00010010011010010101101111001001101101111011011110010100"; -- 100 less than correct key
     constant cipher_txt : w64 := "1000010111101000000100110101010000001111000010101011010000000101";
 
-
+    -- AXI Lite signals
     signal axi_aclk    : std_ulogic;        
     signal axi_aresetn : std_ulogic; 
     -- Read address channel signals
-    signal axi_araddr  : w12; 
+    signal axi_araddr  : std_ulogic_vector(11 downto 0); 
     signal axi_arvalid : std_ulogic;                     
     signal axi_arready : std_ulogic;                     
     -- Write address channel signals
-    signal axi_awaddr  : w12; 
+    signal axi_awaddr  : std_ulogic_vector(11 downto 0); 
     signal axi_awvalid : std_ulogic;                     
     signal axi_awready : std_ulogic;                     
 
-        -- -- Write to address
-        -- axi_awaddr <= addr_p_lsb;
-        -- axi_awvalid <= '1';
-        -- axi_wdata <= test1_input;
-        -- axi_wvalid  <= '1';
-        -- wait until rising_edge(axi_aclk) and axi_awready = '1' and axi_wready  = '1' and axi_bvalid  <= '1';
-        -- axi_bready <= '1';
-        -- wait until rising_edge(axi_aclk);
-        -- axi_awvalid <= '0';
-        -- axi_wvalid  <= '0';
-        -- 
-        -- -- Write data 2
-        -- axi_awaddr <= addr_p_msb;
-        -- axi_awvalid <= '1';
-        -- axi_wdata <= test2_input;
-        -- axi_wvalid  <= '1';
-        -- wait until rising_edge(axi_aclk) and axi_awready = '1' and axi_wready  = '1' and axi_bvalid  <= '1';
-        -- axi_bready <= '1';
-        -- wait until rising_edge(axi_aclk);
-        -- axi_awvalid <= '0';
-        -- axi_wvalid  <= '0';
-        -- 
-        -- -- Read from address
-        -- axi_araddr <= addr_p_lsb;
-        -- axi_arvalid <= '1';
-        -- wait until rising_edge(axi_aclk) and axi_arready = '1' and axi_rvalid  = '1';
-        -- axi_rready <= '1';
-        -- test1_result  <= axi_rdata;
-        -- wait until rising_edge(axi_aclk);
-        -- axi_arvalid <= '0';
-        -- axi_rready <= '0';
-        -- wait until rising_edge(axi_aclk);
-        -- 
-        -- -- Read from address
-        -- axi_araddr <= addr_p_msb;
-        -- axi_arvalid <= '1';
-        -- wait until rising_edge(axi_aclk) and axi_arready = '1' and axi_rvalid  = '1';
-        -- axi_rready <= '1';
-        -- test2_result  <= axi_rdata;
-        -- wait until rising_edge(axi_aclk);
-        -- axi_arvalid <= '0';
-        -- axi_rready <= '0';
-        -- wait until rising_edge(axi_aclk);
-        
-        
-
-        
-
-        -- write_data <= test_1_value;
-        -- write_address <= addr_p_lsb;
-        -- wait until axi_bready = '1';
-        -- read_address <= addr_p_lsb;
-        -- wait on axi_rresp;    -- Write data channel signals
-    signal axi_wdata   : w32; 
+    signal axi_wdata   : std_ulogic_vector(31 downto 0);
     signal axi_wstrb   : std_ulogic_vector(3 downto 0);
     signal axi_wvalid  : std_ulogic;                  
     signal axi_wready  : std_ulogic;                 
     -- Read data channel signals
-    signal axi_rdata   : w32; 
+    signal axi_rdata   : std_ulogic_vector(31 downto 0); 
     signal axi_rresp   : std_ulogic_vector(1 downto 0);  
     signal axi_rvalid  : std_ulogic;                    
     signal axi_rready  : std_ulogic;                     
@@ -127,15 +62,69 @@ architecture sim of des_cracker_sim is
     signal axi_bresp   : std_ulogic_vector(1 downto 0);  
     signal axi_bvalid  : std_ulogic;                     
     signal axi_bready  : std_ulogic;    
+
+    signal read_address:    w12;
+    signal read_data:       w32;
+    signal read_resp:   std_ulogic_vector(1 downto 0);
+
+    signal write_address:   w12;
+    signal write_data:      w32;
+    signal write_resp:  std_ulogic_vector(1 downto 0); 
     
-    -- AXI Lite "master reads from slave" implementation
+    
+begin
+
+    u_des_cracker: entity work.des_cracker(rtl)
+    port map(
+        aclk           => axi_aclk,
+        aresetn        => axi_aresetn,
+
+        s0_axi_araddr  => axi_araddr,
+        s0_axi_arvalid => axi_arvalid,
+        s0_axi_arready => axi_arready,
+    
+        s0_axi_awaddr  => axi_awaddr,
+        s0_axi_awvalid => axi_awvalid,
+        s0_axi_awready => axi_awready,
+    
+        s0_axi_wdata   => axi_wdata,
+        s0_axi_wstrb   => axi_wstrb,
+        s0_axi_wvalid  => axi_wvalid,
+        s0_axi_wready  => axi_wready,
+    
+        s0_axi_rdata   => axi_rdata,
+        s0_axi_rresp   => axi_rresp,
+        s0_axi_rvalid  => axi_rvalid,
+        s0_axi_rready  => axi_rready,
+    
+        s0_axi_bresp   => axi_bresp,
+        s0_axi_bvalid  => axi_bvalid,
+        s0_axi_bready  => axi_bready,
+        
+        irq            => irq,
+        led            => led
+    );
+
+    clock_process: process
+    begin
+        axi_aclk <= '0';
+        wait for period / 2;
+        axi_aclk <= '1';
+        wait for period / 2;
+    end process clock_process;
+
+    test: process
+        -- Test 1
+        constant test1_input1: w32 := x"01234567"; 
+        constant test1_input2: w32 := x"89adcdef"; 
+    
     procedure axi_read(
         -- Clock
         signal aclk:     in  std_ulogic;
         -- function input
-        signal address:  in  w12;
+        signal address:  in  std_ulogic_vector(11 downto 0);
         -- master --> slave 
-        signal araddr:   out w12;
+        signal araddr:   out std_ulogic_vector(11 downto 0);
         signal arvalid:  out std_ulogic; 
         signal rready:   out std_ulogic;
         -- slave --> master
@@ -169,7 +158,7 @@ architecture sim of des_cracker_sim is
     procedure axi_write(
         -- function input
         signal aclk:    in  std_ulogic;
-        signal address: in  w12; 
+        signal address: in  std_ulogic_vector(11 downto 0);
         signal data:    in  std_ulogic_vector(31 downto 0);
         -- master --> slave
         signal awaddr:  out std_ulogic_vector(11 downto 0);
@@ -187,7 +176,6 @@ architecture sim of des_cracker_sim is
         signal response:out std_ulogic_vector(1 downto 0)
         ) is
     begin
-        wait on address;
         -- set the procedure axi_write address we want to write to in awaddr
         awaddr <= address;
         -- set address valid flag awvalid high 
@@ -208,58 +196,7 @@ architecture sim of des_cracker_sim is
 
     end procedure axi_write;
 
-    signal read_address:    w12;
-    signal read_data:       w32;
-    signal read_resp:   std_ulogic_vector(1 downto 0);
 
-    signal write_address:   w12;
-    signal write_data:      w32;
-    signal write_resp:  std_ulogic_vector(1 downto 0); 
-
-begin
-    clock_process: process
-    begin
-        axi_aclk <= '0';
-        wait for period / 2;
-        axi_aclk <= '1';
-        wait for period / 2;
-    end process;
-
-    u_des_cracker: entity work.des_cracker(rtl)
-    port map(
-        aclk           => axi_aclk,
-        aresetn        => axi_aresetn,
-
-        s0_axi_araddr  => axi_araddr,
-        s0_axi_arvalid => axi_arvalid,
-        s0_axi_arready => axi_arready,
-    
-        s0_axi_awaddr  => axi_awaddr,
-        s0_axi_awvalid => axi_awvalid,
-        s0_axi_awready => axi_awready,
-    
-        s0_axi_wdata   => axi_wdata,
-        s0_axi_wstrb   => axi_wstrb,
-        s0_axi_wvalid  => axi_wvalid,
-        s0_axi_wready  => axi_wready,
-    
-        s0_axi_rdata   => axi_rdata,
-        s0_axi_rresp   => axi_rresp,
-        s0_axi_rvalid  => axi_rvalid,
-        s0_axi_rready  => axi_rready,
-    
-        s0_axi_bresp   => axi_bresp,
-        s0_axi_bvalid  => axi_bvalid,
-        s0_axi_bready  => axi_bready,
-        
-        irq            => irq,
-        led            => led
-    );
-
-    tests: process
-        -- Test 1
-        constant test1_input1: w32 := x"01234567"; 
-        constant test1_input2: w32 := x"89adcdef"; 
     begin
         -- TEST 1 write to p LSB, and read from p LSB, should be the same
         
@@ -267,46 +204,7 @@ begin
         write_address <= addr_p_lsb;
         write_data    <= test1_input1;
         axi_write(axi_aclk,  write_address, write_data, axi_awaddr, axi_awvalid, axi_wdata, axi_wstrb, axi_wvalid, axi_bready, axi_awready, axi_bresp, axi_bvalid, axi_wready, write_resp);
-        assert write_resp = "00"         report "[ TEST 1 ] p lsb write did not respond with OKAY" severity error;
-
-        -- Write to p msb
-        write_address <= addr_p_msb;
-        write_data    <= test1_input2;
-        axi_write(axi_aclk,  write_address, write_data, axi_awaddr, axi_awvalid, axi_wdata, axi_wstrb, axi_wvalid, axi_bready, axi_awready, axi_bresp, axi_bvalid, axi_wready, write_resp);
-        assert write_resp = "00"         report "[ TEST 1 ] p msb write did not respond with OKAY" severity error; 
-        
-        -- Read from p lsb
-        read_address <= addr_p_lsb;
-        axi_read(axi_aclk, read_address, axi_araddr, axi_arvalid, axi_rready, axi_arready, axi_rvalid, axi_rdata, axi_rresp, read_data, read_resp);
-        assert read_resp = "00"         report "[ TEST 1 ] p lsb read did not respond with OKAY" severity error; 
-        assert read_data = test1_input1 report "[ TEST 1 ] p lsb read/write value mismatch" severity error; 
-        
-        -- Read from p msb
-        read_address <= addr_p_msb;
-        axi_read(axi_aclk, read_address, axi_araddr, axi_arvalid, axi_rready, axi_arready, axi_rvalid, axi_rdata, axi_rresp, read_data, read_resp);
-        assert read_resp = "00"         report "[ TEST 1 ] p msb read did not respond with OKAY" severity error; 
-        assert read_data = test1_input1 report "[ TEST 1 ] p msb read/write value mismatch" severity error; 
-        
+       -- assert write_resp = axi_resp_OKAY         report "[ TEST 1 ] p lsb write did not respond with OKAY" severity error;
         finish;
-    end process tests;
--- TESTS THAT NEED TO BE DONE
-    -- Check that SM starts correctly
-    -- Check that SM stops correctly
-    -- READ
-        -- works when given correct address
-        -- returns decerr when given wrong address
-        -- freezing of k works as it is supposed to
-    -- WRITE
-        -- works correctly when given correct address
-        -- returns slverr when one tries to access addresses that are read-only
-        -- returns decerr when given wrong address
-
--- Test by writing p, c and k to the DES Cracker, waiting 
--- and retrieving the result.
-
--- p: 0123456789ABCDEF (Plain text)
--- c: 85E813540F0AB405 (Cipher text)
--- k: 12695BC9B7B7F8   (56-bit correct key) Not sure about this Trym? 
-
-
+    end process test;
 end architecture sim;
