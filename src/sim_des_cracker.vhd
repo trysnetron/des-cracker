@@ -113,98 +113,163 @@ begin
         wait for period / 2;
     end process clock_process;
 
-    test: process
-        -- Test 1
-        constant test1_input1: w32 := x"01234567"; 
-        constant test1_input2: w32 := x"89adcdef"; 
+    --test: process
+    --    -- Test 1
+    --    constant test1_input1: w32 := x"01234567"; 
+    --    constant test1_input2: w32 := x"89adcdef"; 
+    --
+    --procedure axi_read(
+    --    -- Clock
+    --    signal aclk:     in  std_ulogic;
+    --    -- function input
+    --    signal address:  in  std_ulogic_vector(11 downto 0);
+    --    -- master --> slave 
+    --    signal araddr:   out std_ulogic_vector(11 downto 0);
+    --    signal arvalid:  out std_ulogic; 
+    --    signal rready:   out std_ulogic;
+    --    -- slave --> master
+    --    signal arready:  in  std_ulogic;
+    --    signal rvalid:   in  std_ulogic;
+    --    signal rdata:    in  std_ulogic_vector(31 downto 0);
+    --    signal rresp:    in  std_ulogic_vector(1 downto 0);
+    --    -- function output
+    --    signal data:     out std_ulogic_vector(31 downto 0);
+    --    signal response: out std_ulogic_vector(1 downto 0)) is
+    --begin
+    --    -- set the address we want to read from in   araddr
+    --    araddr <= address;
+    --    -- set address valid high                   arvalid
+    --    arvalid <= '1';
+    --    -- wait for acknowledge                     arready
+    --    wait until rising_edge(aclk) and arready = '1' and rvalid  = '1';
+    --    -- set read response acknowledge high
+    --    rready <= '1';
+    --    -- fetch data and response
+    --    data     <= rdata;
+    --    response <= rresp;
+
+    --    wait until rising_edge(aclk);
+    --    -- set read-ready-acknowledge low
+    --    arvalid <= '0';
+    --    rready <= '0';
+    --end procedure axi_read;
+
+    ---- AXI Lite "Master writes to slave" implementation
+    --procedure axi_write(
+    --    -- function input
+    --    signal aclk:    in  std_ulogic;
+    --    signal address: in  std_ulogic_vector(11 downto 0);
+    --    signal data:    in  std_ulogic_vector(31 downto 0);
+    --    -- master --> slave
+    --    signal awaddr:  out std_ulogic_vector(11 downto 0);
+    --    signal awvalid: out std_ulogic;
+    --    signal wdata:   out std_ulogic_vector(31 downto 0);
+    --    signal wstrb:   out std_ulogic_vector(3 downto 0);
+    --    signal wvalid:  out std_ulogic;
+    --    signal bready:  out std_ulogic;
+    --    -- slave --> master
+    --    signal awready: in  std_ulogic; 
+    --    signal bresp:   in  std_ulogic_vector(1 downto 0);
+    --    signal bvalid:  in  std_ulogic;
+    --    signal wready:  in  std_ulogic;
+    --    -- function output
+    --    signal response:out std_ulogic_vector(1 downto 0)
+    --    ) is
+    --begin
+    --    -- set the procedure axi_write address we want to write to in awaddr
+    --    awaddr <= address;
+    --    -- set address valid flag awvalid high 
+    --    awvalid <= '1';
+    --    -- put data in wdata field
+    --    wdata <= data;
+    --    -- set data valid flad wvalid high
+    --    wvalid  <= '1';
+    --    -- wait for acknowledge
+    --    wait until rising_edge(aclk) and awready = '1' and wready  = '1' and bvalid  <= '1';
+    --    -- get response and complete handshake. 
+    --    response <= bresp;
+    --    bready <= '1';
+
+    --    wait until rising_edge(aclk);
+    --    awvalid <= '0';
+    --    wvalid  <= '0';
+
+    --end procedure axi_write;
+
+
+    --begin
+    --    -- TEST 1 write to p LSB, and read from p LSB, should be the same
+    --    
+    --    -- Write to p lsb
+    --    write_address <= addr_p_lsb;
+    --    write_data    <= test1_input1;
+    --   -- assert write_resp = axi_resp_OKAY         report "[ TEST 1 ] p lsb write did not respond with OKAY" severity error;
+    --    finish;
+    --end process test;
     
-    procedure axi_read(
-        -- Clock
-        signal aclk:     in  std_ulogic;
-        -- function input
-        signal address:  in  std_ulogic_vector(11 downto 0);
-        -- master --> slave 
-        signal araddr:   out std_ulogic_vector(11 downto 0);
-        signal arvalid:  out std_ulogic; 
-        signal rready:   out std_ulogic;
-        -- slave --> master
-        signal arready:  in  std_ulogic;
-        signal rvalid:   in  std_ulogic;
-        signal rdata:    in  std_ulogic_vector(31 downto 0);
-        signal rresp:    in  std_ulogic_vector(1 downto 0);
-        -- function output
-        signal data:     out std_ulogic_vector(31 downto 0);
-        signal response: out std_ulogic_vector(1 downto 0)) is
-    begin
-        -- set the address we want to read from in   araddr
-        araddr <= address;
-        -- set address valid high                   arvalid
-        arvalid <= '1';
-        -- wait for acknowledge                     arready
-        wait until rising_edge(aclk) and arready = '1' and rvalid  = '1';
-        -- set read response acknowledge high
-        rready <= '1';
-        -- fetch data and response
-        data     <= rdata;
-        response <= rresp;
+    test: process
+	--procedure for reading 32 bit data
+	procedure axi_read (constant address: in w12) is
+	begin
+		axi_araddr  <= address;
+		axi_arvalid <= '1';
+		wait on axi_rvalid;
+		read_data   <= axi_rdata;
+		axi_rready  <= '1';
+		wait until rising_edge(axi_aclk);
+		axi_arvalid <= '0';
+		axi_rready  <= '0';
+	end procedure;
+	
+	--procedure for writing 32 bits of data
+	procedure axi_write (constant address: in w12;
+			     signal   data:    in w32) is
+	begin
+		axi_awaddr  <= address;
+		axi_wdata   <= to_write;
+                axi_wvalid  <= '1';
+                axi_awvalid <= '1';
+                wait on axi_wready;
 
-        wait until rising_edge(aclk);
-        -- set read-ready-acknowledge low
-        arvalid <= '0';
-        rready <= '0';
-    end procedure axi_read;
+		axi_bready  <= '1';
+        	wait until rising_edge(axi_aclk);
 
-    -- AXI Lite "Master writes to slave" implementation
-    procedure axi_write(
-        -- function input
-        signal aclk:    in  std_ulogic;
-        signal address: in  std_ulogic_vector(11 downto 0);
-        signal data:    in  std_ulogic_vector(31 downto 0);
-        -- master --> slave
-        signal awaddr:  out std_ulogic_vector(11 downto 0);
-        signal awvalid: out std_ulogic;
-        signal wdata:   out std_ulogic_vector(31 downto 0);
-        signal wstrb:   out std_ulogic_vector(3 downto 0);
-        signal wvalid:  out std_ulogic;
-        signal bready:  out std_ulogic;
-        -- slave --> master
-        signal awready: in  std_ulogic; 
-        signal bresp:   in  std_ulogic_vector(1 downto 0);
-        signal bvalid:  in  std_ulogic;
-        signal wready:  in  std_ulogic;
-        -- function output
-        signal response:out std_ulogic_vector(1 downto 0)
-        ) is
-    begin
-        -- set the procedure axi_write address we want to write to in awaddr
-        awaddr <= address;
-        -- set address valid flag awvalid high 
-        awvalid <= '1';
-        -- put data in wdata field
-        wdata <= data;
-        -- set data valid flad wvalid high
-        wvalid  <= '1';
-        -- wait for acknowledge
-        wait until rising_edge(aclk) and awready = '1' and wready  = '1' and bvalid  <= '1';
-        -- get response and complete handshake. 
-        response <= bresp;
-        bready <= '1';
+		axi_bready  <= '0';
+		axi_wvalid  <= '0';
+		axi_awvalid <= '0';
+	end procedure;
 
-        wait until rising_edge(aclk);
-        awvalid <= '0';
-        wvalid  <= '0';
-
-    end procedure axi_write;
-
-
-    begin
-        -- TEST 1 write to p LSB, and read from p LSB, should be the same
-        
-        -- Write to p lsb
-        write_address <= addr_p_lsb;
-        write_data    <= test1_input1;
-        axi_write(axi_aclk,  write_address, write_data, axi_awaddr, axi_awvalid, axi_wdata, axi_wstrb, axi_wvalid, axi_bready, axi_awready, axi_bresp, axi_bvalid, axi_wready, write_resp);
-       -- assert write_resp = axi_resp_OKAY         report "[ TEST 1 ] p lsb write did not respond with OKAY" severity error;
-        finish;
-    end process test;
+	begin
+		axi_aresetn <= '0';
+		for i in 1 to 5 loop
+			wait until rising_edge(axi_aclk);
+		end loop;
+		-- resetn <= '1';
+		-- --write of c
+		-- axi_write(c_lsb_addr, c_lsb);
+		-- axi_write(c_msb_addr, c_msb);
+		-- --write of p
+		-- axi_write(p_lsb_addr, p_lsb);
+		-- axi_write(p_msb_addr, p_msb);
+		-- --read p to check
+		-- axi_read(p_lsb_addr);
+		-- --write of k0
+		-- axi_write(k0_lsb_addr, k0_lsb);
+		-- axi_write(k0_msb_addr, k0_msb);
+		-- --check if cracking commences as wanted
+		-- for i = 1 to 10 loop
+		-- 	wait for rising_edge(clk);
+		-- end loop;
+		-- --read k and confirm that writing of k stops
+		-- axi_read(k_lsb);
+		-- k(31 downto 0) <= read_local;
+		-- for i = 1 to 10
+		-- 	wait for rising_edge(clk);
+		-- end loop;
+		-- axi_read(k_msb);
+		-- k(63 downto 32) <= read_local;
+		-- --wait for irq
+   		-- wait on irq;
+		finish;
+	end process test;
 end architecture sim;
