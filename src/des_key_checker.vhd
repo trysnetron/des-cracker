@@ -23,13 +23,13 @@ end entity des_key_checker;
 -- Setting up architecture of the des_key_checker --
 architecture rtl of des_key_checker is
     
-    signal engine_complete  : std_ulogic;
-    signal complete_local   : std_ulogic;
-    signal cipher_txt       : w64;
+    signal engine_complete  : std_ulogic := '0';
+    signal complete_local   : std_ulogic := '0';
+    signal cipher_txt       : w64 := (others => '0');
 
 begin 
    
-    complete <= complete_local;
+    complete <= complete_local; 
 
     check_cipher_text: process(clk)
     begin

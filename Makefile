@@ -7,61 +7,53 @@ VCOM = $(MODELSIMPATH)/vcom
 VSIM = $(MODELSIMPATH)/vsim
 VIVADO = $(VIVADOPATH)/vivado
 
-WORKDIR = gh_work
+MS_WD = work
+GH_WD = gh_work
 
 # Source files, listed in order of compilation (it matters)
-LST = des_pkg \
-			des_engine \
-			des_key_checker \
-			des_sm \
-			des_cracker
+LST = des_pkg  des_engine  des_key_checker  des_sm  des_cracker
 
 SRC = $(patsubst %,src/%.vhd,$(LST))
-SIM = $(patsubst %,src/sim_%.vhd,$(LST))
+SIMSRC = $(patsubst %,src/sim_%.vhd,$(LST))
+SIM = $(patsubst %,%_sim,$(LST)) 
 
+# GHDL 
 
-analyze-gh:
-	ghdl -a --std=08 --workdir=gh_work $(SRC) $(SIM)
+compile-gh:
+	ghdl -a --std=08 --workdir=$(GH_WD) $(SRC) $(SIMSRC)
 
-check-gh: analyze-gh
-	ghdl -r --std=08 --workdir=$(WORKDIR) des_pkg_sim sim
-	ghdl -r --std=08 --workdir=$(WORKDIR) des_engine_sim sim
-	ghdl -r --std=08 --workdir=$(WORKDIR) des_key_checker_sim sim
-	ghdl -r --std=08 --workdir=$(WORKDIR) des_sm_sim sim
-	ghdl -r --std=08 --workdir=$(WORKDIR) des_cracker_sim sim
+check-gh: compile-gh
+	ghdl -r --std=08 --workdir=$(GH_WD) des_pkg_sim sim
+	ghdl -r --std=08 --workdir=$(GH_WD) des_engine_sim sim --vcd=$(WORKDIR)/wf_key_checker
+	ghdl -r --std=08 --workdir=$(GH_WD) des_key_checker_sim sim --vcd=$(WORKDIR)/wf_key_checker
+	ghdl -r --std=08 --workdir=$(GH_WD) des_sm_sim sim --vcd=$(WORKDIR)/wf_sm.vcd
+	ghdl -r --std=08 --workdir=$(GH_WD) des_cracker_sim sim --vcd=$(WORKDIR)/wf_cracker.vcd
 
-validate-gh:
-	ghdl -a --std=08 --workdir=gh_work src/des_pkg.vhd src/des_pkg_sim.vhd src/des_cracker.vhd src/des_cracker_sim.vhd
-	ghdl -r --std=08 --workdir=$(WORKDIR) des_pkg_sim sim --vcd=$(WORKDIR)/wf.vcd
-
-# Verification with ModelSim 
-validate-ms: 
-	$(VLIB) work
-	$(VMAP) work work
-	$(VCOM) -2008 -work work src/des_pkg.vhd src/des_pkg_sim.vhd
-	$(VSIM) -c -do "run -all; quit;" des_pkg_sim 
+# ModelSim 
 
 compile:
-	$(VLIB) work
-	$(VMAP) work work
-	$(VCOM) -2008 -work work src/des_pkg.vhd src/des_key_checker.vhd src/des_sm.vhd src/des_cracker.vhd
+	$(VLIB) $(MS_WD)    
+	$(VMAP) work $(MS_WD)
+	$(VCOM) -2008 -work $(MS_WD) $(SRC) $(SIMSRC) 
 
-simulate: 
-	$(VLIB) work
-	$(VMAP) work work
-	$(VCOM) -2008 -work work src/des_pkg.vhd src/des_key_checker.vhd src/des_sm.vhd src/des_cracker.vhd src/sim_des_cracker.vhd
+# Run all tests in the terminal (doesn't open ModelSim GUI)
+check: compile
+	$(VSIM) -c -do "run -all; quit;" $(SIM) 
+
+sim: compile
 	$(VSIM) des_cracker_sim
 
-synt: compile
+syn: compile
 	cd syn/
 	$(VIVADO) -mode batch -source des.syn.tcl -notrace -tclargs des_cracker	
 
 clean: 
-	rm -r .Xil/ .srcs/ des_cracker/
-	rm *.rpt
-	rm *.jou
-	rm *.log
-	rm *.html
-	rm *.xml
-	rm des_cracker.bit
-	rm $(WORKDIR)
+	rm -rf .Xil/ .srcs/ des_cracker/
+	rm -f *.rpt
+	rm -f *.jou
+	rm -f *.log
+	rm -f *.html
+	rm -f *.xml
+	rm -f des_cracker.bit
+	rm -rf $(MS_WD)
+	rm -rf $(GH_WD)
