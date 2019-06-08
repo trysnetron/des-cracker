@@ -29,96 +29,48 @@ architecture sim of des_sm_sim is
     signal found_key    : w56;
     signal complete     : std_ulogic;
     signal check        : std_ulogic;
+    signal current_key  : w56;
 
 begin
     -- Entities
     sm: entity work.des_sm(rtl)
+    generic map(
+        nr_engines  => 2
+    )
     port map(
         clk         => clk,    
         sresetn     => sresetn,
         crck_begin  => crack_begin,
+        crck_end    => '0',
         plain_txt   => plain_txt,
         cipher_txt  => crt_cphr,
         start_key   => start_key,
+        current_key => current_key,
         found_key   => found_key,
-        sm_complete => complete,
-        crck_end    => '0'
+        sm_complete => complete
     );
 
     -- Processes
-
     f_key           <= found_key;
     sim_complete    <= complete;
 
     clock: process
     begin
-        sresetn <= '0';
-
-        wait for period / 2.0;
         clk <= '0';
         wait for period / 2.0;
-        clk <= '1';                     -- cycle 1
-        
+        clk <= '1';                     
+        sresetn <= '0';
+        wait for period / 2.0;
         sresetn <= '1';
         crack_begin <= '1';
 
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 2
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 3
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 3
-
-        crack_begin <= '0';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 4
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 5
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 6
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 7
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 8
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 9
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 10
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';                     -- cycle 11
-        
+        for i in 1 to 15 loop
+            clk <= '0';
+            wait for period / 2.0;
+            clk <= '1';                     
+            wait for period / 2.0;
+        end loop;
         finish;
     end process clock;
+
 end architecture sim;
