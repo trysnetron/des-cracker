@@ -24,10 +24,10 @@ compile-gh:
 
 check-gh: compile-gh
 	ghdl -r --std=08 --workdir=$(GH_WD) des_pkg_sim sim
-	ghdl -r --std=08 --workdir=$(GH_WD) des_engine_sim sim --vcd=$(WORKDIR)/wf_key_checker
-	ghdl -r --std=08 --workdir=$(GH_WD) des_key_checker_sim sim --vcd=$(WORKDIR)/wf_key_checker
-	ghdl -r --std=08 --workdir=$(GH_WD) des_sm_sim sim --vcd=$(WORKDIR)/wf_sm.vcd
-	ghdl -r --std=08 --workdir=$(GH_WD) des_cracker_sim sim --vcd=$(WORKDIR)/wf_cracker.vcd
+	ghdl -r --std=08 --workdir=$(GH_WD) des_engine_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_key_checker.vcd
+	ghdl -r --std=08 --workdir=$(GH_WD) des_key_checker_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_key_checker.vcd
+	ghdl -r --std=08 --workdir=$(GH_WD) des_sm_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_sm.vcd
+	ghdl -r --std=08 --workdir=$(GH_WD) des_cracker_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_cracker.vcd
 
 # ModelSim 
 
