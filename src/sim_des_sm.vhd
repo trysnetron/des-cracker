@@ -29,7 +29,23 @@ architecture sim of des_sm_sim is
     signal found_key    : w56;
     signal complete     : std_ulogic;
     signal check        : std_ulogic;
+
 begin
+    -- Entities
+    sm: entity work.des_sm(rtl)
+    port map(
+        clk         => clk,    
+        sresetn     => sresetn,
+        crck_begin  => crack_begin,
+        plain_txt   => plain_txt,
+        cipher_txt  => crt_cphr,
+        start_key   => start_key,
+        found_key   => found_key,
+        sm_complete => complete,
+        crck_end    => '0'
+    );
+
+    -- Processes
 
     f_key           <= found_key;
     sim_complete    <= complete;
@@ -103,18 +119,6 @@ begin
         wait for period / 2.0;
         clk <= '1';                     -- cycle 11
         
-        finish(2);
+        finish;
     end process clock;
-
-    sm: entity work.des_sm(rtl)
-    port map(
-    clk         => clk,    
-    sresetn     => sresetn,
-    crck_begin  => crack_begin,
-    plain_txt   => plain_txt,
-    cipher_txt  => crt_cphr,
-    start_key   => start_key,
-    found_key   => found_key,
-    sm_complete => complete
-    );
 end architecture sim;

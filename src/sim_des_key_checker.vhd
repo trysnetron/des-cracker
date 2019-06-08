@@ -108,7 +108,7 @@ begin
         wait for period / 2.0;
         clk <= '1';
         
-        finish(2);
+        finish;
     end process;
 
     checker: entity work.des_key_checker(rtl)
