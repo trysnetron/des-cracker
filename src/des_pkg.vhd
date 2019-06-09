@@ -156,12 +156,14 @@ package des_pkg is
     function left_shift(w:w28; amount:natural) return w28;
     function right_shift(w:w28; amount:natural) return w28;
     function sub_key_gen(key:w56) return w768;
+    function sub_key_step(key:w56; round_nr:positive) return w56;
     function feistel(R:w32; K:w48) return w32;
     function s_map(a:w6; s:s_t) return w4;
     function ip(w:w64) return w64;
     function ebs(w:w32) return w48;
 	function iip(w:w64) return w64;
-	function des_step(subkey:w48; left:w32; right:w32) return w64;
+    function pc2(w:w56) return w48;
+    function des_step(subkey:w48; left:w32; right:w32) return w64;
 	function increment_key(key:w56; N:natural) return w56;
 
 end package des_pkg;
@@ -207,6 +209,32 @@ package body des_pkg is
         return result;
     end function sub_key_gen;
 
+    -- Function for generating arbitrary subkey (NOT PERMUTED WITH PC2)
+    function sub_key_step(key: w56; round_nr: positive) return w56 is
+        variable c: w28;
+        variable d: w28;
+        variable permuted_key : w56;
+    begin
+        if round_nr = 1 or round_nr = 2 or round_nr = 9 or round_nr = 16 then
+            if round_nr = 1 then
+                for i in 1 to 56 loop
+                    permuted_key(i) := key(pc1_table(i));
+                end loop;
+                c := permuted_key(1 to 28);
+                d := permuted_key(29 to 56);
+            else
+                c := key(1 to 28);
+                d := key(29 to 56);
+            end if;
+            c := left_shift(c, 1);
+            d := left_shift(d, 1);
+        else 
+            c := left_shift(c, 2);
+            d := left_shift(d, 2);
+        end if;
+        return c & d;
+    end function sub_key_step;
+
     -- function for cyclic left shift -----------------------------------------------------------------------------------------------
     function left_shift(w:w28; amount:natural) return w28 is
         begin
@@ -250,7 +278,17 @@ package body des_pkg is
         end loop;
         return result;
     end function ebs;
-	
+    
+    -- pc2 permutation function
+    function pc2(w:w56) return w48 is
+        variable result : w48;
+    begin
+        for i in 1 to 48 loop
+            result(i) := w(pc2_table(i));
+        end loop;
+        return result;
+    end function pc2;
+
     -- function to perform s-mapping according to the 8 different s-tables -----------------------------------------------------------
     function s_map(a:w6; s:s_t) return w4 is
         variable row    : natural range 0 to 3;

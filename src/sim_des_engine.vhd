@@ -9,7 +9,7 @@ end entity des_engine_sim;
 
 architecture sim of des_engine_sim is
 
-    constant period   : time := 10 ns;
+    constant period   : time := 1 ns;
     
     signal clk        : std_ulogic;
     signal sresetn    : std_ulogic;
@@ -58,7 +58,9 @@ begin
         ciphertext <= test1_c;
 
         sresetn <= '1';
-        wait on complete;
+        for i in 1 to 20 loop
+            wait until rising_edge(clk);
+        end loop;
         
         assert success = '1' report "Correct key not detected" severity error;
 
@@ -71,7 +73,9 @@ begin
         ciphertext <= test2_c;
 
         sresetn <= '1';
-        wait on complete;
+        for i in 1 to 20 loop
+            wait until rising_edge(clk);
+        end loop;
 
         assert success = '0' report "False positive" severity error;
 
