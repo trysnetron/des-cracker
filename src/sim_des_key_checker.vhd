@@ -31,86 +31,6 @@ architecture sim of des_key_checker_sim is
 
 begin
 
-    process
-    begin
-        sresetn <= '0';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-        
-        sresetn <= '1';
-        current_key <= wrong_key_1;
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        sresetn <= '0';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        sresetn <= '1';
-        current_key <= wrong_key_2;
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        sresetn <= '0';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        sresetn <= '1';
-        current_key <= crt_key;
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-
-        wait for period / 2.0;
-        clk <= '0';
-        wait for period / 2.0;
-        clk <= '1';
-        
-        finish;
-    end process;
-
     checker: entity work.des_key_checker(rtl)
     port map(
         clk         => clk,
@@ -124,5 +44,61 @@ begin
 
     check_out <= check;
     complete_out <= complete;
+
+    clock: process
+    begin
+        for i in 1 to 30 loop
+            wait for period / 2.0;
+            clk <= '0';
+            wait for period / 2.0;
+            clk <= '1';
+        end loop;
+    end process clock;
+
+    tests: process
+    begin
+        sresetn <= '0';
+
+        wait for period;
+        
+        sresetn <= '1';
+        current_key <= wrong_key_1;
+
+        wait until complete = '1';
+        wait for period;
+        if check = '0' then
+            report "DID NOT THINK WRONG KEY 1 WAS THE CORRECT KEY";
+        end if;
+
+        sresetn <= '0';
+
+        wait for period;
+
+        sresetn <= '1';
+        current_key <= wrong_key_2;
+
+        wait until complete = '1';
+        wait for period;
+        if check = '0' then
+            report "DID NOT THINK WRONG KEY 2 WAS THE CORRECT KEY";
+        end if;
+
+        sresetn <= '0';
+
+        wait for period;
+
+        sresetn <= '1';
+        current_key <= crt_key;
+
+        wait until complete = '1';
+        if check = '0' then
+            report "DID NOT THINK CORRECT KEY WAS THE CORRECT KEY";
+        else
+            report "IDENTIFIED CORRECT KEY"; 
+        end if;
+        
+        wait for 2*period;
+        finish;
+    end process;
 
 end architecture sim;

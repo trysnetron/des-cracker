@@ -178,7 +178,7 @@ package body des_pkg is
 		single_key := unsigned(start_key);
 		for i in 1 to nr_engines loop
 			result(i) := std_ulogic_vector(single_key + to_unsigned(i - 1,56));
-		end loop fill_in_keys;
+		end loop;
 		return result;
 	end function initiate_keys;
 
@@ -195,7 +195,7 @@ package body des_pkg is
 			else
 				result(i) := std_ulogic_vector(single_key + to_unsigned(nr_engines,56));
 			end if;
-		end loop fill_in_keys;
+		end loop;
 		return result;
 	end function increment_keys;
 
