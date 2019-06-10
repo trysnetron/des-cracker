@@ -279,7 +279,7 @@ package body des_pkg is
         return result;
     end function ebs;
     
-    -- pc2 permutation function
+    -- pc2 permutation function ------------------------------------------------------------------------------------------------------
     function pc2(w:w56) return w48 is
         variable result : w48;
     begin

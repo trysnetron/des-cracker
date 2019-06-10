@@ -25,14 +25,16 @@ architecture rtl of des_engine is
     type states is (INITIAL, ENCRYPTING, FINAL, FINISHED);
     signal state : states;
 
-    signal round_nr: positive := 1;
+    signal round_nr: natural;
 
     signal ciphertext_local : w64 := (others => '0');
-    --signal C_n  : w28;
-    --signal D_n  : w28;
-    signal acc    : w64;
-    signal subkey : w56;
+    signal acc     : w64;
+    signal subkey  : w48;
+    signal subkeys : w768;
 begin 
+
+    subkeys <= sub_key_gen(key);
+
     sm: process(clk)
     begin
         if rising_edge(clk) then
@@ -47,19 +49,14 @@ begin
                         -- setting signals
                         ciphertext_local <= ciphertext;
                         -- beginning
-                        acc    <= ip(plaintext);
-                        subkey <= sub_key_step(key, 1);
-                        state  <= ENCRYPTING;
+                        acc     <= ip(plaintext);
+                        state   <= ENCRYPTING;
                         
                     when ENCRYPTING =>
-                        acc <= des_step(pc2(subkey), acc(1 to 32), acc(33 to 64));
+                        subkey <= subkeys((round_nr - 1)*48 + 1 to round_nr*48);
+                        acc <= des_step(subkey, acc(1 to 32), acc(33 to 64));
                         if round_nr < 16 then
                             round_nr <= round_nr + 1;
-                            if round_nr = 1 or round_nr = 2 or round_nr = 9 or round_nr = 16 then
-                                subkey <= left_shift(subkey(1 to 28), 1) & left_shift(subkey(29 to 56), 1);
-                            else 
-                                subkey <= left_shift(subkey(1 to 28), 2) & left_shift(subkey(29 to 56), 2);
-                            end if;
                         else
                             state <= FINAL;
                         end if;

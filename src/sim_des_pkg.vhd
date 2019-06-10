@@ -152,6 +152,4 @@ begin
     "resultat: " & integer'image(to_integer(unsigned(des_step(des_step_test_subkey, des_step_test_l, des_step_test_r)))) & 
     "fasit: " & integer'image(to_integer(unsigned(des_step_test_result))) severity error;
 
-    -- Subkey step function
-    
 end architecture sim;
