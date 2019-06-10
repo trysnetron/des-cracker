@@ -131,7 +131,6 @@ begin
             axi_wvalid  <= '0';
             axi_awvalid <= '0';
             wait until rising_edge(axi_aclk);
-            -- assert axi_bresp = axi_resp_OKAY report "Write did not return OKAY" severity note;
         end procedure;
 
         constant addr_p_lsb : w12 := x"000"; 
@@ -187,45 +186,6 @@ begin
         axi_read(addr_k1_msb, read_data);
         assert read_data = x"00" & crrct_key(1 to 24) report "Wrong msb of found key" severity error;
         
-        -- axi_read(addr_k_msb, read_data);
-        -- key <= read_data(9 to 32) & read_low;
-        
-
-
-        -- for i in 1 to 15 loop
-        --     wait until rising_edge(axi_aclk);
-        -- end loop;
-        
-        -- axi_write(addr_p_lsb, test1_input2);
-        
-        
         finish;
-		-- resetn <= '1';
-		-- --write of c
-		-- axi_write(c_lsb_addr, c_lsb);
-		-- axi_write(c_msb_addr, c_msb);
-		-- --write of p
-		-- axi_write(p_lsb_addr, p_lsb);
-		-- axi_write(p_msb_addr, p_msb);
-		-- --read p to check
-		-- axi_read(p_lsb_addr);
-		-- --write of k0
-		-- axi_write(k0_lsb_addr, k0_lsb);
-		-- axi_write(k0_msb_addr, k0_msb);
-		-- --check if cracking commences as wanted
-		-- for i = 1 to 10 loop
-		-- 	wait for rising_edge(clk);
-		-- end loop;
-		-- --read k and confirm that writing of k stops
-		-- axi_read(k_lsb);
-		-- k(31 downto 0) <= read_local;
-		-- for i = 1 to 10
-		-- 	wait for rising_edge(clk);
-		-- end loop;
-		-- axi_read(k_msb);
-		-- k(63 downto 32) <= read_local;
-		-- --wait for irq
-   		-- wait on irq;
-		
-	end process test;
+    end process test;
 end architecture sim;
