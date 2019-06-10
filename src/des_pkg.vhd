@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 package des_pkg is
     subtype w4 is std_ulogic_vector(1 to 4);
     subtype w6 is std_ulogic_vector(1 to 6);
+	subtype w12 is std_ulogic_vector(1 to 12);
     subtype w28 is std_ulogic_vector(1 to 28);
     subtype w32 is std_ulogic_vector(1 to 32);
     subtype w48 is std_ulogic_vector(1 to 48);
@@ -18,6 +19,8 @@ package des_pkg is
     type es_t  is array(1 to 48) of natural range 1 to 32;
     type s_t   is array(0 to 63) of natural range 0 to 15;
 	type pf_t  is array(1 to 32) of natural range 1 to 32;
+	
+	type key_vector	is array(integer range <>) of w56; 
 
     constant ip_table : ip_t := (
         58, 50, 42, 34, 26, 18, 10,  2, 
@@ -161,22 +164,40 @@ package des_pkg is
     function ebs(w:w32) return w48;
 	function iip(w:w64) return w64;
 	function des_step(subkey:w48; left:w32; right:w32) return w64;
-	function increment_key(key:w56; N:natural) return w56;
+	function initiate_keys(start_key:w56; nr_engines:natural) return key_vector;
+	function increment_keys(keys:key_vector; nr_engines:natural) return key_vector;
 
 end package des_pkg;
 
 package body des_pkg is
-
-    -- function for incrementing key -----------------------------------------------------------------------------------------------
-	function increment_key(key:w56; N:natural) return w56 is 
-		variable result : unsigned(1 to 56);
+	-- function for initiating key vector -------------------------------------------------------------------------------------------
+	function initiate_keys(start_key:w56; nr_engines:natural) return key_vector is
+		variable result:key_vector(1 to nr_engines);
+		variable single_key:unsigned(1 to 56);
 	begin
-		result := unsigned(key);
-		for i in 1 to N loop
-			result := result + '1';
+		single_key := unsigned(start_key);
+		for i in 1 to nr_engines loop
+			result(i) := std_ulogic_vector(single_key + to_unsigned(i - 1,56));
 		end loop;
-		return std_ulogic_vector(result);
-	end function increment_key;
+		return result;
+	end function initiate_keys;
+
+    -- function for incrementing keys -----------------------------------------------------------------------------------------------
+	function increment_keys(keys:key_vector; nr_engines:natural) return key_vector is
+		variable result:key_vector(1 to nr_engines);
+		variable single_key:unsigned(1 to 56);
+		constant highest_key:unsigned(1 to 56) := x"FFFFFFFFFFFFFF";
+	begin
+		for i in 1 to nr_engines loop
+			single_key := unsigned(keys(i));
+			if single_key + to_unsigned(nr_engines,56) > highest_key then -- Check if we have passed the highest possible key
+				result(i) := std_ulogic_vector(to_unsigned(nr_engines,56) - (highest_key - single_key));
+			else
+				result(i) := std_ulogic_vector(single_key + to_unsigned(nr_engines,56));
+			end if;
+		end loop;
+		return result;
+	end function increment_keys;
 
     -- function for generating subkeys from initial key ----------------------------------------------------------------------------
     function sub_key_gen(key:w56) return w768 is -- Returns all subkeys concatenated to one long bit vector of length 728
