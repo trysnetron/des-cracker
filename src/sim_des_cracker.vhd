@@ -97,13 +97,14 @@ begin
     
     test: process
         -- AXI Lite - Master read from slave
-        procedure axi_read (constant address: in w12) is
+        procedure axi_read (constant address: in  w12;
+                            signal   data   : out w32) is
         begin
             axi_araddr  <= address;
             axi_arvalid <= '1';
             wait on axi_rvalid;
 
-            read_data   <= axi_rdata;
+            data        <= axi_rdata;
             axi_rready  <= '1';
             wait until rising_edge(axi_aclk);
             
@@ -175,10 +176,11 @@ begin
         axi_write(addr_k0_lsb, wrong_key1(25 to 56));
         axi_write(addr_k0_msb, x"00" & wrong_key1(1 to 24));
         
+        wait on irq;
 
-        for i in 1 to 15 loop
-            wait until rising_edge(axi_aclk);
-        end loop;
+        -- for i in 1 to 15 loop
+        --     wait until rising_edge(axi_aclk);
+        -- end loop;
         
         -- axi_write(addr_p_lsb, test1_input2);
         
