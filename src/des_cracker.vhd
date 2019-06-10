@@ -71,12 +71,14 @@ architecture rtl of des_cracker is
 
 begin 
 	-- Entity initializations
-    sm: entity work.des_sm(rtl)
+	sm: entity work.sm(rtl)
+	generic map(
+		nr_engines  => 8
+	)
     port map(
         clk         => aclk,    
         sresetn     => aresetn,
-        crck_begin  => crack_begin,
-		crck_end	=> crack_end,
+        crack_begin => crack_begin,
         plain_txt   => p,
         cipher_txt  => c,
         start_key   => k0,
