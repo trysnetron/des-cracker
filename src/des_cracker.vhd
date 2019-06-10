@@ -142,7 +142,7 @@ axi_read: process(aclk) begin
 
 						-- MSB's of k0 (starting key)
 						elsif unsigned(s0_axi_araddr) < x"018" then
-							s0_axi_rdata <= k0(55 downto 32) & "00000000";
+							s0_axi_rdata <= x"00" & k0(55 downto 32);
 
 						-- LSB's of k (current key)
 						elsif unsigned(s0_axi_araddr) < x"01c" then 
@@ -151,7 +151,7 @@ axi_read: process(aclk) begin
 
 						-- MSB's of k (current key)
 						elsif unsigned(s0_axi_araddr) < x"020" then 
-							s0_axi_rdata <= k(55 downto 32) & "00000000";
+							s0_axi_rdata <= x"00" & k(55 downto 32);
 							k_freeze <= '0'; -- k needs to be unfrozen
 
 						-- LSB's of k1 (found key)
@@ -160,7 +160,7 @@ axi_read: process(aclk) begin
 
 						-- MSB's of k1 (found key)
 						elsif unsigned(s0_axi_araddr) < x"028" then 
-							s0_axi_rdata <= k1(55 downto 32) & "00000000";
+							s0_axi_rdata <= x"00" & k1(55 downto 32);
 
 						else
 							s0_axi_rvalid <= '0';
