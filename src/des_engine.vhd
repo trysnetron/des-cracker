@@ -62,7 +62,8 @@ begin
                         end if;
                     
                     when FINAL =>
-                        if iip(acc(33 to 64) & acc(1 to 32)) = ciphertext_local then
+                        acc <= iip(acc(33 to 64) & acc(1 to 32));
+                        if  acc = ciphertext_local then
                             success <= '1';
                         end if;
                         complete <= '1';

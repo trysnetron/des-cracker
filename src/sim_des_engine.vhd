@@ -51,16 +51,18 @@ begin
     begin
         -- Test 1: Check is the engine can signal the cipher to be correct
         sresetn <= '0';
-        wait until rising_edge(clk);
-        
         plaintext  <= test1_p;
         key        <= test1_k;
         ciphertext <= test1_c;
-
+        
+        wait until rising_edge(clk);
+        
         sresetn <= '1';
-        for i in 1 to 20 loop
-            wait until rising_edge(clk);
-        end loop;
+        wait on complete;
+        wait until rising_edge(clk);
+        -- for i in 1 to 20 loop
+        --    wait until rising_edge(clk);
+        --end loop;
         
         assert success = '1' report "Correct key not detected" severity error;
 
