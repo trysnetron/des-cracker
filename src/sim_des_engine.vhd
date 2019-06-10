@@ -32,13 +32,13 @@ begin
         success     => success
     );
 
-    clock: process 
-    begin
-        clk <= '0';
-        wait for period / 2;
-        clk <= '1';
-        wait for period / 2; 
-    end process clock;
+    --clock: process 
+    --begin
+    --    clk <= '0';
+    --    wait for period / 2;
+    --    clk <= '1';
+    --    wait for period / 2; 
+    --end process clock;
 
     test: process
         constant test1_p : w64 := x"0123456789ABCDEF";
@@ -55,33 +55,56 @@ begin
         key        <= test1_k;
         ciphertext <= test1_c;
         
-        wait until rising_edge(clk);
-        
+        clk <= '0';
+        wait for period / 2.0;
+        clk <= '1';                     
+        wait for period / 2.0;
+
+        clk <= '0';
+        wait for period / 2.0;
+        clk <= '1';                     
+        wait for period / 2.0;
+
         sresetn <= '1';
-        wait on complete;
-        wait until rising_edge(clk);
+        report "Starting simulation";
+        for i in 1 to 25 loop
+            clk <= '0';
+            wait for period / 2.0;
+            clk <= '1';                     
+            wait for period / 2.0;
+        end loop;
+        
+        wait until complete = '1';
+        assert success = '1' report "could not identify correct key" severity error;
+
+        --wait until rising_edge(clk);
+        --
+        --sresetn <= '1';
+        -- wait on complete;
+        -- wait until rising_edge(clk);
         -- for i in 1 to 20 loop
+        --     wait for period;
+        -- end loop;
+        
+        --assert success = '1' report "Correct key not detected" severity error;
+
+        ---- Test 2: Check if the engine can signal an almost correct key as wrong key
+        --plaintext  <= test2_p;
+        --key        <= test2_k;
+        --ciphertext <= test2_c;
+
+        --sresetn <= '0';
+        --wait until rising_edge(clk);
+        --
+
+        --sresetn <= '1';
+        --for i in 1 to 20 loop
         --    wait until rising_edge(clk);
         --end loop;
-        
-        assert success = '1' report "Correct key not detected" severity error;
 
-        -- Test 2: Check if the engine can signal an almost correct key as wrong key
-        sresetn <= '0';
-        wait until rising_edge(clk);
-        
-        plaintext  <= test2_p;
-        key        <= test2_k;
-        ciphertext <= test2_c;
-
-        sresetn <= '1';
-        for i in 1 to 20 loop
-            wait until rising_edge(clk);
-        end loop;
-
-        assert success = '0' report "False positive" severity error;
+        --assert success = '0' report "False positive" severity error;
 
         finish;
-    end process;
+    end process test;
 
 end architecture sim; 

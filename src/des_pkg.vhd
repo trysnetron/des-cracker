@@ -215,17 +215,17 @@ package body des_pkg is
         variable d: w28;
         variable permuted_key : w56;
     begin
+		if round_nr = 1 then
+			for i in 1 to 56 loop
+				permuted_key(i) := key(pc1_table(i));
+			end loop;
+			c := permuted_key(1 to 28);
+			d := permuted_key(29 to 56);
+		else
+			c := key(1 to 28);
+			d := key(29 to 56);
+		end if;
         if round_nr = 1 or round_nr = 2 or round_nr = 9 or round_nr = 16 then
-            if round_nr = 1 then
-                for i in 1 to 56 loop
-                    permuted_key(i) := key(pc1_table(i));
-                end loop;
-                c := permuted_key(1 to 28);
-                d := permuted_key(29 to 56);
-            else
-                c := key(1 to 28);
-                d := key(29 to 56);
-            end if;
             c := left_shift(c, 1);
             d := left_shift(d, 1);
         else 

@@ -91,6 +91,25 @@ architecture sim of des_pkg_sim is
     constant iip_test_out : w64 := 
         "1000010111101000000100110101010000001111000010101011010000000101";
 
+    -- sub_key_step tests
+    constant init_key : w56 := x"12695BC9B7B7F8";
+    constant c1d1 : w56 := x"E19955FAACCF1E"; 
+    constant c1d2 : w56 := x"C332ABF5599E3D"; 
+    constant c1d3 : w56 := x"0CCAAFF56678F5"; 
+    constant c1d4 : w56 := x"332ABFC599E3D5"; 
+    constant c1d5 : w56 := x"CCAAFF06678F55"; 
+    constant c1d6 : w56 := x"32ABFC399E3D55"; 
+    constant c1d7 : w56 := x"CAAFF0C678F556"; 
+    constant c1d8 : w56 := x"2ABFC339E3D559"; 
+    constant c1d9 : w56 := x"557F8663C7AAB3"; 
+    constant c1d10 : w56 := x"55FE199F1EAACC";
+    constant c1d11 : w56 := x"57F8665C7AAB33";
+    constant c1d12 : w56 := x"5FE19951EAACCF";
+    constant c1d13 : w56 := x"7F866557AAB33C";
+    constant c1d14 : w56 := x"FE19955EAACCF1";
+    constant c1d15 : w56 := x"F866557AAB33C7";
+    constant c1d16 : w56 := x"F0CCAAF556678F";
+
     constant des_step_test_subkey : w48 := "000110110000001011101111111111000111000001110010"; -- K1
     constant des_step_test_r : w32 := "11110000101010101111000010101010"; -- R0
     constant des_step_test_l : w32 := "11001100000000001100110011111111"; -- L0
@@ -133,5 +152,6 @@ begin
     "resultat: " & integer'image(to_integer(unsigned(des_step(des_step_test_subkey, des_step_test_l, des_step_test_r)))) & 
     "fasit: " & integer'image(to_integer(unsigned(des_step_test_result))) severity error;
 
-
+    -- Subkey step function
+    
 end architecture sim;

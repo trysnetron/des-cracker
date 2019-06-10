@@ -27,50 +27,52 @@ architecture rtl of des_engine is
 
     signal round_nr: positive := 1;
 
-    signal plaintext_local  : w64 := (others => '0');
-    signal key_local        : w56 := (others => '0');
     signal ciphertext_local : w64 := (others => '0');
-
+    --signal C_n  : w28;
+    --signal D_n  : w28;
     signal acc    : w64;
     signal subkey : w56;
 begin 
     sm: process(clk)
     begin
         if rising_edge(clk) then
+            complete <= '0';
+            success  <= '0';
             if sresetn = '0' then
-                round_nr         <= 1;
-                complete         <= '0';
-                success          <= '0';
-                plaintext_local  <= plaintext;
-                key_local        <= key;
-                ciphertext_local <= ciphertext;
-                state <= INITIAL;
+                round_nr <= 1;
+                state    <= INITIAL;
             else
                 case state is
                     when INITIAL =>
-                        acc    <= ip(plaintext_local);
-                        subkey <= sub_key_step(key_local, 1);
+                        -- setting signals
+                        ciphertext_local <= ciphertext;
+                        -- beginning
+                        acc    <= ip(plaintext);
+                        subkey <= sub_key_step(key, 1);
                         state  <= ENCRYPTING;
-                    
+                        
                     when ENCRYPTING =>
                         acc <= des_step(pc2(subkey), acc(1 to 32), acc(33 to 64));
                         if round_nr < 16 then
                             round_nr <= round_nr + 1;
-                            subkey <= sub_key_step(subkey, round_nr);
+                            if round_nr = 1 or round_nr = 2 or round_nr = 9 or round_nr = 16 then
+                                subkey <= left_shift(subkey(1 to 28), 1) & left_shift(subkey(29 to 56), 1);
+                            else 
+                                subkey <= left_shift(subkey(1 to 28), 2) & left_shift(subkey(29 to 56), 2);
+                            end if;
                         else
                             state <= FINAL;
                         end if;
                     
                     when FINAL =>
                         acc <= iip(acc(33 to 64) & acc(1 to 32));
+                        state <= FINISHED;
+                    
+                    when FINISHED =>
                         if  acc = ciphertext_local then
                             success <= '1';
                         end if;
                         complete <= '1';
-                        state <= FINISHED;
-                    
-                    when FINISHED =>
-
                 end case;
             end if;
         end if;
