@@ -70,7 +70,7 @@ architecture rtl of des_cracker is
     signal state_r, state_w : rw_states;
 
 begin 
-	
+	-- Entity initializations
     sm: entity work.des_sm(rtl)
     port map(
         clk         => aclk,    
@@ -85,6 +85,12 @@ begin
         sm_complete => crack_compl
     );
 	
+	-- Processes
+
+	-- Shorthands
+	led <= k(33 downto 30);
+	irq <= crack_compl;
+
 	update_current_key: process(aclk)
 	begin
 		if rising_edge(aclk) then
@@ -95,9 +101,6 @@ begin
 			end if;
 		end if;
 	end process update_current_key;
-
-	led <= "1010";
-	irq <= '0';
 
 -- Read process.
 axi_read: process(aclk) begin
