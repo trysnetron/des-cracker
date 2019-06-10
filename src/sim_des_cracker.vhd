@@ -142,7 +142,7 @@ begin
         constant addr_k0_msb: w12 := x"014";
         constant addr_k_lsb : w12 := x"018";
         constant addr_k_msb : w12 := x"01c";
-        constant addr_k1_ls : w12 := x"020";
+        constant addr_k1_lsb: w12 := x"020";
         constant addr_k1_msb: w12 := x"024";
     
         
@@ -176,7 +176,21 @@ begin
         axi_write(addr_k0_lsb, wrong_key1(25 to 56));
         axi_write(addr_k0_msb, x"00" & wrong_key1(1 to 24));
         
+        -- Wait until cracker signals found key
         wait on irq;
+
+        -- Check that lsb of found key is correct
+        axi_read(addr_k1_lsb, read_data);
+        assert read_data = crrct_key(25 to 56) report "Wrong lsb of found key" severity error;
+        
+        -- Check that msb of found key is correct
+        axi_read(addr_k1_msb, read_data);
+        assert read_data = x"00" & crrct_key(1 to 24) report "Wrong msb of found key" severity error;
+        
+        -- axi_read(addr_k_msb, read_data);
+        -- key <= read_data(9 to 32) & read_low;
+        
+
 
         -- for i in 1 to 15 loop
         --     wait until rising_edge(axi_aclk);
