@@ -186,6 +186,38 @@ begin
         axi_read(addr_k1_msb, read_data);
         assert read_data = x"00" & crrct_key(1 to 24) report "Wrong msb of found key" severity error;
         
+        report "Test 2 start";
+        axi_aresetn <= '0';
+        for i in 1 to 2 loop
+            wait until rising_edge(axi_aclk);
+        end loop;
+        axi_aresetn <= '1';
+
+        -- Write p
+        axi_write(addr_p_msb, plain_text(1 to 32));
+        axi_write(addr_p_lsb, plain_text(33 to 64));
+        
+        -- Write c
+        axi_write(addr_c_msb, cipher_txt(1 to 32));
+        axi_write(addr_c_lsb, cipher_txt(33 to 64));
+        
+        -- Write k0, starting the cracker
+        axi_write(addr_k0_lsb, wrong_key1(25 to 56));
+        axi_write(addr_k0_msb, x"00" & wrong_key1(1 to 24));
+        
+        -- Wait 4 clock cycles (each cracking takes 1 cycle, and we need 10 to find)
+        for i in 1 to 4 loop
+            wait until rising_edge(axi_aclk);
+        end loop;
+
+        -- Write k0, stopping the cracker
+        axi_write(addr_k0_lsb, wrong_key1(25 to 56));
+        axi_write(addr_k0_msb, x"00" & wrong_key1(1 to 24));
+        
+        for i in 1 to 20 loop
+            wait until rising_edge(axi_aclk);
+        end loop;
+
         finish;
     end process test;
 end architecture sim;
