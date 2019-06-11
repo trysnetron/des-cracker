@@ -48,8 +48,7 @@ sim_%: compile
 	$(VSIM) $*_sim
 
 syn: compile
-	cd syn/
-	$(VIVADO) -mode batch -source des.syn.tcl -notrace -tclargs des_cracker	
+	cd syn && $(VIVADO) -mode batch -source ../des.syn.tcl -notrace -tclargs des_cracker	
 
 clean: 
 	rm -rf .Xil/ .srcs/ des_cracker/
