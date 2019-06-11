@@ -165,7 +165,6 @@ axi_read: process(aclk) begin
 							s0_axi_rdata <= x"00" & k1(55 downto 32);
 
 						else
-							s0_axi_rvalid <= '0';
 							s0_axi_rresp  <= axi_resp_DECERR;
 						end if;
 					end if;
@@ -238,8 +237,6 @@ begin
 						elsif unsigned(s0_axi_awaddr) < x"028" then 
 							s0_axi_bresp  <= axi_resp_SLVERR; -- Registers k and k1 are read-only
 						else
-							s0_axi_awready <= '0';
-							s0_axi_wready <= '0';
 							s0_axi_bresp  <= axi_resp_DECERR;
 						end if;
 					end if;

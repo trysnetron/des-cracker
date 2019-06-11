@@ -105,6 +105,7 @@ begin
             wait on axi_rvalid;
 
             data        <= axi_rdata;
+            read_resp   <= axi_rresp;
             axi_rready  <= '1';
             wait until rising_edge(axi_aclk);
             
@@ -125,6 +126,7 @@ begin
             wait on axi_wready;
             
             axi_bready  <= '1';
+            write_resp  <= axi_bresp;
             wait until rising_edge(axi_aclk);
             
             axi_bready  <= '0';
@@ -217,6 +219,27 @@ begin
         for i in 1 to 20 loop
             wait until rising_edge(axi_aclk);
         end loop;
+
+        report "Test 3 start";
+        axi_aresetn <= '0';
+        for i in 1 to 2 loop
+            wait until rising_edge(axi_aclk);
+        end loop;
+        axi_aresetn <= '1';
+
+        wait until rising_edge(axi_aclk);
+        
+        axi_write(addr_k_lsb, plain_text(1 to 32));
+        assert write_resp = axi_resp_SLVERR report "Writing to k does not return SLVERR" severity error;
+        
+        axi_write(addr_k1_msb, plain_text(1 to 32));
+        assert write_resp = axi_resp_SLVERR report "Writing to k1 does not return SLVERR" severity error;
+
+        axi_write(x"030", plain_text(1 to 32));
+        assert write_resp = axi_resp_DECERR report "Writing outside address range does not return DECERR" severity error;
+
+        axi_read(x"040", read_data);
+        assert read_resp = axi_resp_DECERR report "Reading outside address range does not return DECERR" severity error;
 
         finish;
     end process test;
