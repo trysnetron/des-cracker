@@ -94,15 +94,15 @@ begin
 	irq <= crack_compl;
 
 	update_current_key: process(aclk)
-	begin
-		if rising_edge(aclk) then
-			if(aresetn = '0') then
-				k <= (others => '0');
-			elsif k_freeze = '0' then
-				k <= k_local;
-			end if;
-		end if;
+    begin
+        if rising_edge(aclk) then
+            if k_freeze = '0' then
+                k <= k_local;
+            end if;
+        end if;
 	end process update_current_key;
+
+    -- k <= k_local;
 
 -- Read process.
 axi_read: process(aclk) begin
