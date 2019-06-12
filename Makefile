@@ -11,7 +11,7 @@ MS_WD = work
 GH_WD = gh_work
 
 # Source files, listed in order of compilation (it matters)
-LST = des_pkg  des_key_checker  des_sm  des_cracker
+LST = des_pkg  des_engine  des_sm  des_cracker
 
 SRC = $(patsubst %,src/%.vhd,$(LST))
 SIMSRC = $(patsubst %,src/sim_%.vhd,$(LST))
@@ -24,7 +24,7 @@ compile-gh:
 
 check-gh: compile-gh
 	ghdl -r --std=08 --workdir=$(GH_WD) des_pkg_sim sim
-	ghdl -r --std=08 --workdir=$(GH_WD) des_key_checker_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_key_checker.vcd
+	ghdl -r --std=08 --workdir=$(GH_WD) des_engine_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_engine.vcd
 	ghdl -r --std=08 --workdir=$(GH_WD) des_sm_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_sm.vcd
 	ghdl -r --std=08 --workdir=$(GH_WD) des_cracker_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_cracker.vcd
 

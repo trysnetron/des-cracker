@@ -95,6 +95,11 @@ architecture sim of des_pkg_sim is
     constant des_step_test_r : w32 := "11110000101010101111000010101010"; -- R0
     constant des_step_test_l : w32 := "11001100000000001100110011111111"; -- L0
     constant des_step_test_result : w64 := "1111000010101010111100001010101011101111010010100110010101000100"; -- L1 & R1
+
+    constant des_p  : w64 := x"0123456789ABCDEF";
+    constant des_c  : w64 := x"85E813540F0AB405";
+    constant des_wk : w56 := x"12695FC9B5B7F8"; -- Wrong key
+    constant des_ck : w56 := x"12695BC9B7B7F8"; -- Correct key
 begin
     -- Initial permutation
     assert (ip(ip_test_w) = ip_test_res) report "ERROR: Initial permutation gives bad output" severity error;
@@ -133,5 +138,6 @@ begin
     "resultat: " & integer'image(to_integer(unsigned(des_step(des_step_test_subkey, des_step_test_l, des_step_test_r)))) & 
     "fasit: " & integer'image(to_integer(unsigned(des_step_test_result))) severity error;
 
-
+    assert (des(des_p, des_wk) /= des_c) report "des validated wrong key" severity error;
+    assert (des(des_p, des_ck) = des_c) report "des did not validate correct key" severity error;
 end architecture sim;

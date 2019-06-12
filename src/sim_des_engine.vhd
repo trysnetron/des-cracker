@@ -17,9 +17,9 @@ architecture sim of des_engine_sim is
     constant wrong_key_1 : w56 := "10010010011010010101101111001001101101111011011111111000";
     constant wrong_key_2 : w56 := "01010010011010010101101111001001101101111011011111111000";
     
-    signal p : w64;
-    signal k : w56;
-    signal c : w64;
+    signal p : w64 := plain_txt;
+    signal k : w56 := wrong_key_1;
+    signal c : w64 := crt_cphr;
     signal match : std_ulogic;
 
 begin
@@ -35,9 +35,6 @@ begin
     tests: process
     begin
         
-        p <= plain_txt;
-        c <= crt_cphr;
-        k <= wrong_key_1;
         wait for 1 ns;
         assert match = '0' report "engine matched wrong key 1" severity error;
         

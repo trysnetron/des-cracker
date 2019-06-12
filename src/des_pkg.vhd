@@ -164,6 +164,7 @@ package des_pkg is
     function ebs(w:w32) return w48;
     function iip(w:w64) return w64;
     function des_step(subkey:w48; left:w32; right:w32) return w64;
+    function des(p:w64; k:w56) return w64;
     function initiate_keys(start_key:w56; nr_engines:natural) return key_vector;
     function increment_keys(keys:key_vector; nr_engines:natural) return key_vector;
 
@@ -327,6 +328,22 @@ package body des_pkg is
     begin
         return right & (left xor feistel(right, subkey));
     end function des_step;
+
+    function des(p:w64; k:w56) return w64 is
+        variable acc : w64; -- Intermediate storage (accumulator)
+        variable sks : w768; -- All subkeys
+    begin
+        -- Generates all 16 subkeys
+        sks := sub_key_gen(k); 
+        -- Perform initial permutation on text
+        acc := ip(p);
+        -- Do all 16 rounds
+        for i in 0 to 15 loop
+            acc := des_step(sks(i*48 + 1 to (i + 1)*48 ), acc(1 to 32), acc(33 to 64));
+        end loop;
+        -- Return ciphertext
+        return iip(acc(33 to 64) & acc(1 to 32)); 
+    end function des;
 
 end package body des_pkg;
 
