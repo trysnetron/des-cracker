@@ -18,6 +18,8 @@ In this report we discuss the different parts of our design, simulations used to
 
 ## Design overview
 
+![Blokk diagram](images/design_overview.png?raw=true "Block diagram of design")
+
 ## Package
 
 ## Engines
