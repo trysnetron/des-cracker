@@ -163,9 +163,9 @@ begin
 
     begin
         report "Test 1 start";
-		axi_aresetn <= '0';
-		for i in 1 to 2 loop
-			wait until rising_edge(axi_aclk);
+        axi_aresetn <= '0';
+        for i in 1 to 2 loop
+            wait until rising_edge(axi_aclk);
         end loop;
         axi_aresetn <= '1';
 

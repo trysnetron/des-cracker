@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 package des_pkg is
     subtype w4 is std_ulogic_vector(1 to 4);
     subtype w6 is std_ulogic_vector(1 to 6);
-	subtype w12 is std_ulogic_vector(1 to 12);
+    subtype w12 is std_ulogic_vector(1 to 12);
     subtype w28 is std_ulogic_vector(1 to 28);
     subtype w32 is std_ulogic_vector(1 to 32);
     subtype w48 is std_ulogic_vector(1 to 48);
@@ -18,9 +18,9 @@ package des_pkg is
     type pc2_t is array(1 to 48) of natural range 1 to 56;
     type es_t  is array(1 to 48) of natural range 1 to 32;
     type s_t   is array(0 to 63) of natural range 0 to 15;
-	type pf_t  is array(1 to 32) of natural range 1 to 32;
-	
-	type key_vector	is array(integer range <>) of w56; 
+    type pf_t  is array(1 to 32) of natural range 1 to 32;
+    
+    type key_vector	is array(integer range <>) of w56; 
 
     constant ip_table : ip_t := (
         58, 50, 42, 34, 26, 18, 10,  2, 
@@ -133,27 +133,27 @@ package des_pkg is
          2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11 
     );
 
-	constant pf_table : pf_t := (
-		16,  7, 20, 21,  
+    constant pf_table : pf_t := (
+        16,  7, 20, 21,  
         29, 12, 28, 17,
-		 1, 15, 23, 26,
-		 5, 18, 31, 10,
-		 2,  8, 24, 14,
-		32, 27,  3,  9,
-		19, 13, 30,  6,
-		22, 11,  4, 25
-	);
+         1, 15, 23, 26,
+         5, 18, 31, 10,
+         2,  8, 24, 14,
+        32, 27,  3,  9,
+        19, 13, 30,  6,
+        22, 11,  4, 25
+    );
 
-	constant iip_table : ip_t := (
-		40,  8, 48, 16, 56, 24, 64, 32,
-		39,  7, 47, 15, 55, 23, 63, 31,
-		38,  6, 46, 14, 54, 22, 62, 30,
+    constant iip_table : ip_t := (
+        40,  8, 48, 16, 56, 24, 64, 32,
+        39,  7, 47, 15, 55, 23, 63, 31,
+        38,  6, 46, 14, 54, 22, 62, 30,
         37,  5, 45, 13, 53, 21, 61, 29,
         36,  4, 44, 12, 52, 20, 60, 28,
-	    35,  3, 43, 11, 51, 19, 59, 27,
+        35,  3, 43, 11, 51, 19, 59, 27,
         34,  2, 42, 10, 50, 18, 58, 26,
         33,  1, 41,  9, 49, 17, 57, 25
-	);
+    );
     
     function left_shift(w:w28; amount:natural) return w28;
     function right_shift(w:w28; amount:natural) return w28;
@@ -162,42 +162,42 @@ package des_pkg is
     function s_map(a:w6; s:s_t) return w4;
     function ip(w:w64) return w64;
     function ebs(w:w32) return w48;
-	function iip(w:w64) return w64;
-	function des_step(subkey:w48; left:w32; right:w32) return w64;
-	function initiate_keys(start_key:w56; nr_engines:natural) return key_vector;
-	function increment_keys(keys:key_vector; nr_engines:natural) return key_vector;
+    function iip(w:w64) return w64;
+    function des_step(subkey:w48; left:w32; right:w32) return w64;
+    function initiate_keys(start_key:w56; nr_engines:natural) return key_vector;
+    function increment_keys(keys:key_vector; nr_engines:natural) return key_vector;
 
 end package des_pkg;
 
 package body des_pkg is
-	-- function for initiating key vector -------------------------------------------------------------------------------------------
-	function initiate_keys(start_key:w56; nr_engines:natural) return key_vector is
-		variable result:key_vector(1 to nr_engines);
-		variable single_key:unsigned(1 to 56);
-	begin
-		single_key := unsigned(start_key);
-		for i in 1 to nr_engines loop
-			result(i) := std_ulogic_vector(single_key + to_unsigned(i - 1,56));
-		end loop;
-		return result;
-	end function initiate_keys;
+    -- function for initiating key vector -------------------------------------------------------------------------------------------
+    function initiate_keys(start_key:w56; nr_engines:natural) return key_vector is
+        variable result:key_vector(1 to nr_engines);
+        variable single_key:unsigned(1 to 56);
+    begin
+        single_key := unsigned(start_key);
+        for i in 1 to nr_engines loop
+            result(i) := std_ulogic_vector(single_key + to_unsigned(i - 1,56));
+        end loop;
+        return result;
+    end function initiate_keys;
 
     -- function for incrementing keys -----------------------------------------------------------------------------------------------
-	function increment_keys(keys:key_vector; nr_engines:natural) return key_vector is
-		variable result:key_vector(1 to nr_engines);
-		variable single_key:unsigned(1 to 56);
-		constant highest_key:unsigned(1 to 56) := x"FFFFFFFFFFFFFF";
-	begin
-		for i in 1 to nr_engines loop
-			single_key := unsigned(keys(i));
-			if single_key + to_unsigned(nr_engines,56) > highest_key then -- Check if we have passed the highest possible key
-				result(i) := std_ulogic_vector(to_unsigned(nr_engines,56) - (highest_key - single_key));
-			else
-				result(i) := std_ulogic_vector(single_key + to_unsigned(nr_engines,56));
-			end if;
-		end loop;
-		return result;
-	end function increment_keys;
+    function increment_keys(keys:key_vector; nr_engines:natural) return key_vector is
+        variable result:key_vector(1 to nr_engines);
+        variable single_key:unsigned(1 to 56);
+        constant highest_key:unsigned(1 to 56) := x"FFFFFFFFFFFFFF";
+    begin
+        for i in 1 to nr_engines loop
+            single_key := unsigned(keys(i));
+            if single_key + to_unsigned(nr_engines,56) > highest_key then -- Check if we have passed the highest possible key
+                result(i) := std_ulogic_vector(to_unsigned(nr_engines,56) - (highest_key - single_key));
+            else
+                result(i) := std_ulogic_vector(single_key + to_unsigned(nr_engines,56));
+            end if;
+        end loop;
+        return result;
+    end function increment_keys;
 
     -- function for generating subkeys from initial key ----------------------------------------------------------------------------
     function sub_key_gen(key:w56) return w768 is -- Returns all subkeys concatenated to one long bit vector of length 728
@@ -273,7 +273,7 @@ package body des_pkg is
         end loop;
         return result;
     end function ebs;
-	
+    
     -- function to perform s-mapping according to the 8 different s-tables -----------------------------------------------------------
     function s_map(a:w6; s:s_t) return w4 is
         variable row    : natural range 0 to 3;
@@ -290,12 +290,12 @@ package body des_pkg is
     function feistel(R:w32; K:w48) return w32 is
         variable temp_xor:w48;
         variable temp_smap:w32;
-		variable result:w32;
+        variable result:w32;
     begin
-		-- performing bitwise xor of E(R) and subkey K_i
+        -- performing bitwise xor of E(R) and subkey K_i
         temp_xor := ebs(R) xor K;
-		
-		-- performing s mapping of output of xor
+        
+        -- performing s mapping of output of xor
         temp_smap( 1 to  4) := s_map(temp_xor( 1 to  6), s_1);
         temp_smap( 5 to  8) := s_map(temp_xor( 7 to 12), s_2);
         temp_smap( 9 to 12) := s_map(temp_xor(13 to 18), s_3);
@@ -304,29 +304,29 @@ package body des_pkg is
         temp_smap(21 to 24) := s_map(temp_xor(31 to 36), s_6);
         temp_smap(25 to 28) := s_map(temp_xor(37 to 42), s_7);
         temp_smap(29 to 32) := s_map(temp_xor(43 to 48), s_8);
-		
-		-- performing permutation of output of s mapping
-		for i in 1 to 32 loop
-			result(i) := temp_smap(pf_table(i));
-		end loop;
+        
+        -- performing permutation of output of s mapping
+        for i in 1 to 32 loop
+            result(i) := temp_smap(pf_table(i));
+        end loop;
         return result;
     end function feistel;
-	
-	-- function to do inverse initial permutation --------------------------------------------------------------------------------------
-	function iip(w:w64) return w64 is
+    
+    -- function to do inverse initial permutation --------------------------------------------------------------------------------------
+    function iip(w:w64) return w64 is
         variable result:w64;
     begin
         for i in 1 to 64 loop
             result(i) := w(iip_table(i));
         end loop;
         return result;
-	end function iip;
+    end function iip;
 
-	-- function to do one iteration of 16 step procedure -------------------------------------------------------------------------------
-	function des_step(subkey:w48; left:w32; right:w32) return w64 is
-	begin
-		return right & (left xor feistel(right, subkey));
-	end function des_step;
+    -- function to do one iteration of 16 step procedure -------------------------------------------------------------------------------
+    function des_step(subkey:w48; left:w32; right:w32) return w64 is
+    begin
+        return right & (left xor feistel(right, subkey));
+    end function des_step;
 
 end package body des_pkg;
 
