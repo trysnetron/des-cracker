@@ -40,6 +40,9 @@ architecture rtl of sm is
     signal keys : key_vector(1 to nr_engines);
     signal checker_restart  : std_ulogic;
 
+    -- Reset signal for all checkers
+    signal checker_reset : std_ulogic;
+
     -- Signals out of checkers
     signal complete_vec     : std_ulogic_vector(1 to nr_engines);
     signal check_vec        : std_ulogic_vector(1 to nr_engines);
@@ -49,6 +52,9 @@ begin
     -- the start_key and the first N-1 keys after start_key. If every checker fails, 
     -- the keys are incremented by N, and the key-checkers continue checking keys. 
     -- If one checker succeds all the checkers are stopped. 
+
+    -- Reset all checkers on either sresetn or checker_restart low
+    checker_reset <= (sresetn and checker_restart);
 
     -- COMPLETE CHCK -------------------------------------------------------------
     check_for_completion: process(complete_vec)
@@ -65,7 +71,7 @@ begin
         key_checker: entity work.des_key_checker(rtl)
         port map(
             clk         => clk,
-            sresetn     => (sresetn and checker_restart),
+            sresetn     => checker_reset,
             plain_txt   => plain_txt,
             correct_txt => cipher_txt,
             key         => keys(i),
