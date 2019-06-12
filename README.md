@@ -3,8 +3,9 @@ Hardware DES cracker written in VHDL
 
 # Roadmap
 
-- [ ] Single DES cracking core
-- [ ] Cracking core wrapper
+- [X] Single DES cracking core
+- [X] Cracking core wrapper
 - [ ] Software interface
-- [ ] Multiple cracking cores
+- [X] Multiple cracking cores
+- [ ] Trym get a life
 
