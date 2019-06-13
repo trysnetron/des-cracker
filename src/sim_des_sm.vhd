@@ -70,6 +70,10 @@ begin
         wait until rising_edge(clk);
         assert found_key = crt_key report "SM did not find correct key" severity error;
         
+        for i in 1 to 3 loop
+            wait until rising_edge(clk);
+        end loop;
+
         sresetn <= '0';
         crack_begin <= '0';
         input_key <= crt_key;

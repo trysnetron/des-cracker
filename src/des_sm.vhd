@@ -26,7 +26,7 @@ port(
 end entity sm;
 
 architecture rtl of sm is
-    type state_type is (IDLE, WORKING);
+    type state_type is (IDLE, WORKING, FINISHED);
     signal state     : state_type := IDLE;
     signal k_vec     : key_vector(1 to nr_engines) := (others => (others => '0'));
     signal match_vec : std_ulogic_vector(1 to nr_engines) := (others => '0');
@@ -67,19 +67,24 @@ begin
                             state <= WORKING;
                         end if;
                     when WORKING =>
-                        if unsigned(match_vec) > 0  then
-                            for j in 1 to nr_engines loop
-                                if match_vec(j) = '1' then
-                                    k1    <= k_vec(j);
-                                    irq   <= '1';
-                                    if run = '0' then
-                                        state <= IDLE; 
+                        if run = '1' then
+                            if unsigned(match_vec) > 0  then
+                                for j in 1 to nr_engines loop
+                                    if match_vec(j) = '1' then
+                                        k1    <= k_vec(j);
+                                        irq   <= '1';
+                                        state <= FINISHED; 
                                     end if;
-                                end if;
-                            end loop;
+                                end loop;
+                            else
+                                k_vec <= increment_keys(k_vec, nr_engines);
+                            end if;
                         else
-                            k_vec <= increment_keys(k_vec, nr_engines);
-                            state <= WORKING;
+                            state <= IDLE;
+                        end if;
+                    when FINISHED =>
+                        if run = '0' then
+                            state <= IDLE;
                         end if;
                 end case;
             end if;
