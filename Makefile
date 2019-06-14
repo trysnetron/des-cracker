@@ -6,7 +6,7 @@ VMAP = $(MODELSIMPATH)/vmap
 VCOM = $(MODELSIMPATH)/vcom
 VSIM = $(MODELSIMPATH)/vsim
 VIVADO = $(VIVADOPATH)/vivado
-
+BOOTGEN = $(VIVADOPATH)/bootgen
 MS_WD = work
 GH_WD = gh_work
 
@@ -47,7 +47,10 @@ sim_%: compile
 	$(VSIM) $*_sim
 
 syn: compile
-	cd syn && $(VIVADO) -mode batch -source ../des.syn.tcl -notrace -tclargs des_cracker	
+	rm -rf syn/* && cd syn && $(VIVADO) -mode batch -source ../des.syn.tcl -notrace -tclargs des_cracker	
+
+bin:
+	cd syn && $(BOOTGEN) -w -image ../boot.bif -o boot.bin
 
 clean: 
 	rm -rf .Xil/ .srcs/ des_cracker/
