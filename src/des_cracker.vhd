@@ -56,13 +56,12 @@ architecture rtl of des_cracker is
     signal p              : std_ulogic_vector(63 downto 0) := (others => '0'); -- The plaintext           base adress: 0x000
     signal c              : std_ulogic_vector(63 downto 0) := (others => '0'); -- The ciphertext          base adress: 0x008
     signal k0             : std_ulogic_vector(55 downto 0) := (others => '0'); -- The starting secret key base adress: 0x010
-    signal k              : std_ulogic_vector(55 downto 0) := (others => '0'); -- The current secret key  base adress: 0x018
+    signal k_msb          : std_ulogic_vector(31 downto 0) := (others => '0'); -- The current secret key  base adress: 0x018
     signal k1             : std_ulogic_vector(55 downto 0) := (others => '0'); -- The found secret key    base adress: 0x020
     signal k_local        : std_ulogic_vector(55 downto 0) := (others => '0'); -- The current secret key 
     
     signal crack_run      : std_ulogic := '0'; -- Command to make engines begin checking keys
     signal crack_complete : std_ulogic := '0'; -- Flag for engines let us know that correct key has been found
-    signal k_freeze       : std_ulogic := '0'; -- Flag to indicate that CPU is reading current key 'k'
 
     type rw_states is (IDLE, WAITING);
     signal state_r, state_w : rw_states;
@@ -85,19 +84,9 @@ begin
     );
   
     -- Shorthands
-    led           <= k(33 downto 30);
+    led           <= k_local(33 downto 30);
     irq           <= crack_complete;
     
-    -- Processes
-    update_current_key: process(aclk)
-    begin
-        if rising_edge(aclk) then
-            if k_freeze = '0' then
-                k <= k_local;
-            end if;
-        end if;
-    end process update_current_key;
-
 -- Read process.
 axi_read: process(aclk) begin
     if rising_edge(aclk) then
@@ -142,13 +131,12 @@ axi_read: process(aclk) begin
                         
                         -- LSB's of k (current key)
                         elsif unsigned(s0_axi_araddr) < x"01c" then 
-                            s0_axi_rdata <= k(31 downto 0);
-                            k_freeze <= '1'; -- k needs to be frozen
+                            s0_axi_rdata <= k_local(31 downto 0);
+                            k_msb        <= x"00" & k_local(55 downto 32);
                         
                         -- MSB's of k (current key)
                         elsif unsigned(s0_axi_araddr) < x"020" then 
-                            s0_axi_rdata <= x"00" & k(55 downto 32);
-                            k_freeze <= '0'; -- k needs to be unfrozen
+                            s0_axi_rdata <= k_msb;
                         
                         -- LSB's of k1 (found key)
                         elsif unsigned(s0_axi_araddr) < x"024" then 

@@ -157,9 +157,6 @@ begin
         constant test1_input1: w32 := plain_text(1 to 32); 
         constant test1_input2: w32 := plain_text(33 to 64); 
 
-        -- Test 3
-        constant test3_lsb: w32 := x"fffffff8";
-        constant test3_msb: w32 := x"00" & wrong_key2(1 to 24);
 
     begin
         report "Test 1 start";
@@ -234,22 +231,30 @@ begin
         axi_write(addr_p_lsb, plain_text(33 to 64));
         axi_write(addr_c_msb, cipher_txt(1 to 32));
         axi_write(addr_c_lsb, cipher_txt(33 to 64));
-        axi_write(addr_k0_lsb, test3_lsb);
-        axi_write(addr_k0_msb, test3_msb);
+        axi_write(addr_k0_lsb, wrong_key2(25 to 56));
+        axi_write(addr_k0_msb, x"00" & wrong_key2(1 to 24));
         
         wait until rising_edge(axi_aclk);
         -- Read k lsb, freezing k
         axi_read(addr_k_lsb, read_data);
         
+        assert read_data = x"c9b7b7ab" report "k was wrong" severity error;
+
         -- Wait 5 cycles for k msb to change
         for i in 1 to 5 loop
             wait until rising_edge(axi_aclk);
         end loop;
         axi_read(addr_k_msb, read_data);
-        assert read_data = test3_msb report "k was not frozen" severity error;
+        assert read_data = x"0012695b" report "k was not frozen" severity error;
         for i in 1 to 5 loop
             wait until rising_edge(axi_aclk);
         end loop;
+        axi_read(addr_k_msb, read_data);
+        assert read_data = x"0012695b" report "k does not stay frozen" severity error;
+        for i in 1 to 5 loop
+            wait until rising_edge(axi_aclk);
+        end loop;
+        
 
         report "Test 4 start";
         axi_aresetn <= '0';
