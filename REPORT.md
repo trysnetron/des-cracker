@@ -143,22 +143,42 @@ The implementation of the axi-wrapper can be found in `des_cracker.vhd` and the 
 
 ### Validation 
 
-To make sure that our AXI-wrapper met the constraints mentioned above we use the following tests
+As for all tests is our project, we tried to make them more or less automatic with asserts in the testbench. To make sure that our AXI-wrapper met the constraints mentioned above we use the following tests, waveforms displayed with GTKWave.
 
-1. We test that the cracker starts when the correct sequence of registers is written to. First, `p`, then `c` then `k0` LSB and lastly `k0` MSB. In this point we also test that the AXI wrapper can handle write requests to mapped adresses. We also wait untill the correct key is found, and check that it returns the correct key. 
+#### Test 1
 
-2. We test that the cracker stops when the LSB of `k0` are written to. 
-
-3. We test that the value of `k` freezes while in between read requests of `k` LSB and MSB
-
-4. We test that we get the correct responses when submitting read/write requests to addresses that are not mapped to, and when submitting write requests to adresses that are read-only. 
+We test that the cracker starts when the correct sequence of registers is written to. First, `p`, then `c` then `k0` LSB and lastly `k0` MSB. In this point we also test that the AXI wrapper can handle write requests to mapped adresses. We also wait untill the correct key is found, and check that it returns the correct key. 
 
 ![AXI WF1](images/wf-cracker-1.png?raw=true)
+
+The waveform shows the writing to the registers of p, c and k, starting at 20ns. After they have been written high, we can see that there is a delay of some clock cycles, until the irq signal is set high by the wrapper. Then we perform the read operation on the adresses of k1, and verify that the key read is the correct key.
+
+#### Test 2 
+
+We test that the cracker stops when the LSB of `k0` are written to. 
+
 ![AXI WF2](images/wf-cracker-2.png?raw=true)
+
+This test starts in the same way as the first test, but right after starting the engine by writing to the MSB of `k0`, we write to LSB of `k0`, stopping the cracking operation. We verify that the cracking has stopped by waiting for longer than we know the cracking should take (from test 1) and again read `k1` to check the result. We can see that the result is `0`, so the cracking has been unsuccessful, meaning we stopped the cracking process.
+
+
+#### Test 3 
+
+We test that the value of `k` freezes while in between read requests of `k` LSB and MSB
+
 ![AXI WF3](images/wf-cracker-3.png?raw=true)
+
+This test is performed by starting the cracking process and immediately reading LSB and then MSB of `k`, then we wait for a few clock cycles, knowing that the state machine should update `k` for each cycle, and read the MSB again. If it is the same as the first time we read from it, it hasn't changed, and we know that `k` has been successfully freezed.
+
+In the waveform, we see that `axi_rdata` don't change when we read from it two times around 160ns, meaning it passes the test.
+
+#### Test 4 
+
+We test that we get the correct responses when submitting read/write requests to addresses that are not mapped to, and when submitting write requests to adresses that are read-only. 
+
 ![AXI WF4](images/wf-cracker-4.png?raw=true)
 
-As before we use asserts often to validate, but these images show the waveforms generated compiling with GHDL, and viewed using GTKWave as well. 
+Here, we simply read and write to a handful of adresses where read and/or write access is limited, and check the appropriate response register. `axi_rresp` for reading, and `axi_bresp` for writing. If there is no error, the response should be `00`, but as we can see in the waveform, it returns `SLVERR` and `DECERR` when it should.
 
 ## Synthesis
 
