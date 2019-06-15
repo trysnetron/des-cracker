@@ -135,20 +135,32 @@ There have been set some constraints as to how the communication shall work, and
 
 4. When there is submitted a read-request for the LSB of `k`, the value of `k` must be frozen such that the value of `k` is the same untill the entire value of `k` is read. 
 
+The implementation of the axi-wrapper can be found in `des_cracker.vhd` and the corresponding simulation file can be found in `sim_des_cracker.vhd`. 
+
 ### Validation 
 
 To make sure that our AXI-wrapper met the constraints mentioned above we use the following tests
 
-1. We test that the cracker starts when the correct sequence of registers is written to. First, `p`, then `c` then `k0` LSB and lastly `k0` MSB. 
+1. We test that the cracker starts when the correct sequence of registers is written to. First, `p`, then `c` then `k0` LSB and lastly `k0` MSB. In this point we also test that the AXI wrapper can handle write requests to mapped adresses. We also wait untill the correct key is found, and check that it returns the correct key. 
 
-2. 
+2. We test that the cracker stops when the LSB of `k0` are written to. 
+
+3. We test that the value of `k` freezes while in between read requests of `k` LSB and MSB
+
+4. We test that we get the correct responses when submitting read/write requests to addresses that are not mapped to, and when submitting write requests to adresses that are read-only. 
 
 ![AXI WF1](images/wf_cracker1.png?raw=true "WF of axi-wrapper 1")
 ![AXI WF2](images/wf_cracker2.png?raw=true "WF of axi-wrapper 2")
 ![AXI WF3](images/wf_cracker3.png?raw=true "WF of axi-wrapper 3")
 ![AXI WF4](images/wf_cracker4.png?raw=true "WF of axi-wrapper 4")
 
-## Synthesis 
+As before we use asserts often to validate, but these images show the waveforms generated compiling with GHDL, and viewed using GTKWave as well. 
+
+## Synthesis
+
+After synthesis we found that we were able to generate as much as 12 engines, using 88% of the logical ports on the FPGA and XX% of the memory. This part of the synthesis report is shown below
+
+In relation to the timing the longest path in the design requires 56 ns to propagate through, meaning that the highest clock frequency we could operate at was 19 MHz. This is also shown below. 
 
 ## Test on Zybo board
 
