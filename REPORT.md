@@ -28,24 +28,32 @@ After the checkers are finished checking whether the produced cipher text matche
 
 ## Package
 
+The entirety of the DES algorithm is implemented in the des_package.vhd file.
+
 ## Engines
 
-The engine is the core of our design. It is responsible for encrypting a plaintext using the DES algorithm and deciding wether the given key was correct. We decided to use the simplest possible design, a purely combinatorial engine.
+The engine is the core of our design. It is responsible for encrypting a plaintext using the DES algorithm and deciding wether the given key was correct.
 
-### Interface
+### Interface - Engine 1
 
 | Port | I/O | Type | Description |
 | ---- | --- | ---- | ----------- |
 | `p`  | in  | std_ulogic_vector(63 downto 0) | The plaintext |
 | `c`  | in  | std_ulogic_vector(63 downto 0) | The ciphertext |
 | `k`  | in  | std_ulogic_vector(55 downto 0) | The key |
-| `match`| out | std_ulogic | Whether `p` encrypted with `k` matches `c` or not |
+| `match`| out | std_ulogic | Whether `p` encrypted with `k` matches `c` or not | 
 
-### Notes
+ We started out with the simplest possible design, a purely combinatorial engine that computes one ciphertext, and compares it with the correct ciphertext in one clock cycle. This architecture, while simple, does not perform very well. The plan was that after we had implemented the entire system we would make an engine that could work faster, and reuse more hardware such that we could instantiate more of them. Sadly we were not able to complete the second engine in time. 
 
-The entirety of the DES algorithm is implemented in the des_package.vhd file. 
+ The implementation of engine 1 can be found in `des_engine.vhd`, and it's corresponding simulation file can be found in `sim_des_engine.vhd`. 
 
-This architecture, while simple, did not perform as well as we had hoped. This, as well as alternative architectures, will be discussed in the synthesis section.
+ ### Validation - Engine 1 
+
+ The functionality of this engine was hard to validate by looking at waveforms alone, as it is purely combinatorial. Therefore we use a set of `assert` statements to check whether the engine identifies the correct key, and disregards the wrong keys. However, below is an image from the the waveforms of the simulation of engine 1 using GHDL and GTKWave. 
+
+ ![waveform engine1](images/waveform_engine1.png?raw=true "waveform of succesful engine")
+
+For this (and most of the coming validations) we use the the following plain text, key and cipher text: `plain text = 0x123456789ABCDEF`, `key = 0x12695BC9B7B7F8` and `cipher text = 85E813540F0AB405`. From the waveform we can see that when the correct key is put as input, the match signal goes high.
 
 ## Controller 
 
@@ -65,7 +73,7 @@ The controller is the brain of our design. It initiates an array of engines and 
 | `k1`      | out | std_ulogic_vector(55 downto 0) | The correct key, when found |
 | `irq`     | out | std_ulogic                     | Interrupt request, set high for one clock period when the correct key is found. |
 
-![Blokk diagram](images/engine_controller.png?raw=true "State machine diagram of engine controller")
+![SM diagram](images/engine_controller.png?raw=true "State machine diagram of engine controller")
 
 The controller works by creating an array of engines, and then supplying them with different keys, incrementing the given keys for each clock cycle. At the start of each clock cycle, the controlles checks whether any of the engines have had a match, if they have, the controller finds the index of the engine with correct key, extracts the key with the same index from the array of keys being cracked by the engines, and writes that key to `k1`, as well as setting the `irq` signal high. Then it changes state to FINISHED, and waits for `run` to be set low, resetting it to the IDLE state. If none of the engines have a match, each of the keys in the array of keys being worked on are incremented by the _number of engines_. This makes the engines always crack different keys without overlap.
 
