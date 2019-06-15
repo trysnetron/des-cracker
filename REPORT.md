@@ -203,9 +203,15 @@ In relation to the timing the longest path in the design requires 53 ns to propa
 
 ![Timing Report](images/timing_report.png?raw=true "Timing report")
 
-## Conclusion
+## Results
 
 Operating at a clock frequency of 19 MHz with 12 des-engines is probably far from the best design this year, but it means that we can test 228 million keys per second. However, with 2 to the power of 56 possible keys. The worst case is still that it would take 3658 days (approximately 10 years) to crack a 64 bit cipher with one Zybo board. 
+
+## Improvements
+
+As previously mentioned, our design takes a little over a year for the worst case. This is because of our single-clock-cycle-cracking. In one way this makes everything simpler for us, since adjustments will have immediate effect on the possible clock frequency of our design, but it is also inherently slow and will never beat more sophisticated architectures like reuseable DES rounds and pipelining.
+
+Pipelining is probably the best architecture for this project. It is based on splitting the DES algorithm up into smaller parts (e.x. initial permutation, 16 rounds of encryption, final permutation and comparison -> 19 steps), which should be about the same size.
 
 ## References
 
