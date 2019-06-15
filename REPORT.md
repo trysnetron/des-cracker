@@ -73,7 +73,7 @@ The controller is the brain of our design. It initiates an array of engines and 
 | `k1`      | out | std_ulogic_vector(55 downto 0) | The correct key, when found |
 | `irq`     | out | std_ulogic                     | Interrupt request, set high for one clock period when the correct key is found. |
 
-![SM diagram](images/engine_controller.png?raw=true "State machine diagram of engine controller")
+![SM diagram](images/engine_controller_sm.png?raw=true "State machine diagram of engine controller")
 
 The controller works by creating an array of engines, and then supplying them with different keys, incrementing the given keys for each clock cycle. At the start of each clock cycle, the controlles checks whether any of the engines have had a match, if they have, the controller finds the index of the engine with correct key, extracts the key with the same index from the array of keys being cracked by the engines, and writes that key to `k1`, as well as setting the `irq` signal high. Then it changes state to FINISHED, and waits for `run` to be set low, resetting it to the IDLE state. If none of the engines have a match, each of the keys in the array of keys being worked on are incremented by the _number of engines_. This makes the engines always crack different keys without overlap.
 
