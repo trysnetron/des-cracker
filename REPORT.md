@@ -51,9 +51,13 @@ The engine is the core of our design. It is responsible for encrypting a plainte
 
  The functionality of this engine was hard to validate by looking at waveforms alone, as it is purely combinatorial. Therefore we use a set of `assert` statements to check whether the engine identifies the correct key, and disregards the wrong keys. However, below is an image from the the waveforms of the simulation of engine 1 using GHDL and GTKWave. 
 
- ![waveform engine1](images/waveform_engine1.png?raw=true "waveform of succesful engine")
+ ![waveform engine1](images/wf_engine.png?raw=true "waveform of succesful engine")
 
 For this (and most of the coming validations) we use the the following plain text, key and cipher text: `plain text = 0x123456789ABCDEF`, `key = 0x12695BC9B7B7F8` and `cipher text = 85E813540F0AB405`. From the waveform we can see that when the correct key is put as input, the match signal goes high.
+
+### Interface - Engine 2
+
+### Validation - Engine 2
 
 ## Controller 
 
@@ -73,21 +77,78 @@ The controller is the brain of our design. It initiates an array of engines and 
 | `k1`      | out | std_ulogic_vector(55 downto 0) | The correct key, when found |
 | `irq`     | out | std_ulogic                     | Interrupt request, set high for one clock period when the correct key is found. |
 
+The controller works by creating an array of engines, and then supplying them with different keys, incrementing the given keys for each clock cycle. Starting in IDLE, it transitions to WORKING, when the `run` signal is high. When in state WORKING the controlles checks whether any of the engines have had a match at the start of each clock cycle. If a match is found, the controller finds the index of the engine with correct key, extracts the key with the same index from the array of current keys being, writes that key to `k1`, and sets the `irq` signal high.
+Then it changes state to FINISHED, and waits for `run` to be set low, resetting it to the IDLE state. If none of the engines have find a match, we stay in WORKING and each of the keys in the array of keys being worked on are incremented by the _number of engines_. This makes the engines always crack different keys without overlap.
+
+This is illustrated in the diagram below. Also, in each clock cycle, the current key `k` is set to the last key in the key array.
+
 ![SM diagram](images/engine_controller_sm.png?raw=true "State machine diagram of engine controller")
 
-The controller works by creating an array of engines, and then supplying them with different keys, incrementing the given keys for each clock cycle. At the start of each clock cycle, the controlles checks whether any of the engines have had a match, if they have, the controller finds the index of the engine with correct key, extracts the key with the same index from the array of keys being cracked by the engines, and writes that key to `k1`, as well as setting the `irq` signal high. Then it changes state to FINISHED, and waits for `run` to be set low, resetting it to the IDLE state. If none of the engines have a match, each of the keys in the array of keys being worked on are incremented by the _number of engines_. This makes the engines always crack different keys without overlap.
+The implementation of the engine controller can be found in `des_sm.vhd` and it's corresponding simulation entity in `sim_des_sm.vhd`.
 
-Also, in each clock cycle, the current key `k` is set to the last key in the key array.
+## Validation
+
+This entity was easier to validate by inspecting the waveforms, however we also use som assert statements to 
 
 ## AXI4 Lite wrapper
 
 The AXI4 Lite wrapper is, as the name suggests, just a thin wrapper around the rest of the system. It is capable of communicating via the AXI4 Lite protocol, making it possible for the embedded ARM Cortex CPU on the Zybo board interact with the DES cracker. 
 
-## Synthesis
+### Interface 
 
-## Linux driver
+| Name             | Direction | Type                           | Description                               |
+| :----            | :----     | :----                          | :----                                     |
+| `aclk`           | in        | std_ulogic                     | Master clock from CPU part of Zynq core   |
+| `aresetn`        | in        | std_ulogic                     | Reset signal, synchronous and active low  |
+| `s0_axi_araddr`  | in        | std_ulogic_vector(11 downto 0) | Read address                              |
+| `s0_axi_arvalid` | in        | std_ulogic                     | Read address valid                        |
+| `s0_axi_arready` | out       | std_ulogic                     | Read address acknowledge                  |
+| `s0_axi_awaddr`  | in        | std_ulogic_vector(11 downto 0) | Write address                             |
+| `s0_axi_awvalid` | in        | std_ulogic                     | Write address valid flag                  |
+| `s0_axi_awready` | out       | std_ulogic                     | Write address acknowledge                 |
+| `s0_axi_wdata`   | in        | std_ulogic_vector(31 downto 0) | Write data                                |
+| `s0_axi_wstrb`   | in        | std_ulogic_vector(3 downto 0)  | Write byte enables                        |
+| `s0_axi_wvalid`  | in        | std_ulogic                     | Write data and byte enables valid         |
+| `s0_axi_wready`  | out       | std_ulogic                     | Write data and byte enables acknowledge   |
+| `s0_axi_rdata`   | out       | std_ulogic_vector(31 downto 0) | Read data response                        |
+| `s0_axi_rresp`   | out       | std_ulogic_vector(1 downto 0)  | Read status response                      |
+| `s0_axi_rvalid`  | out       | std_ulogic                     | Read data and status response valid flag  |
+| `s0_axi_rready`  | in        | std_ulogic                     | Read response acknowledge from CPU        |
+| `s0_axi_bresp`   | out       | std_ulogic_vector(1 downto 0)  | Write status response                     |
+| `s0_axi_bvalid`  | out       | std_ulogic                     | Write status response valid               |
+| `s0_axi_bready`  | in        | std_ulogic                     | Write response acknowledge                |
+| `irq`            | out       | std_ulogic                     | Interrupt request                         |
+| `led`            | out       | std_ulogic_vector(3 downto 0)  | Wired to the four user LEDs               |
 
-It's necessary to interface with the DES cracker from the CPU on the Zybo board. The CPU is running a GNU/Linux operating system, this prompts us to write a Linux driver. 
+The general contraints of the AXI4 lite system is that each of the registers `p`, `c`, `k0`, `k` and `k1` must be written to/read in two separate write/read requests. The read/write response is encoded as follows:
+* If the CPU tries to access adresses, that are not mapped, the response should be DECERR. 
+* If the CPU tries to submit a write request to a read-only adresses, the response should be SLVERR
+* Otherwise, reponse is OKAY.
+
+There have been set some constraints as to how the communication shall work, and these help us detail what tests we have made for the axi-wrapper. Below are the constraints in a list format
+
+1. The design should be able to handle read/write requests submitted simultaneously. 
+
+2. `p` and `c` are read-write registers without side effect, and `k1` is a read-only register without side effect. 
+
+3. `k0` is a read-write register with the side effect that when the cracking machines starts when the MSB are written to, and stops when the LSB are written to. 
+
+4. When there is submitted a read-request for the LSB of `k`, the value of `k` must be frozen such that the value of `k` is the same untill the entire value of `k` is read. 
+
+### Validation 
+
+To make sure that our AXI-wrapper met the constraints mentioned above we use the following tests
+
+1. We test that the cracker starts when the correct sequence of registers is written to. First, `p`, then `c` then `k0` LSB and lastly `k0` MSB. 
+
+2. 
+
+![AXI WF1](images/wf_cracker1.png?raw=true "WF of axi-wrapper 1")
+![AXI WF2](images/wf_cracker2.png?raw=true "WF of axi-wrapper 2")
+![AXI WF3](images/wf_cracker3.png?raw=true "WF of axi-wrapper 3")
+![AXI WF4](images/wf_cracker4.png?raw=true "WF of axi-wrapper 4")
+
+## Synthesis 
 
 ## Test on Zybo board
 
