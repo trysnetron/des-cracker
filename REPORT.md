@@ -30,6 +30,23 @@ After the checkers are finished checking whether the produced cipher text matche
 
 ## Engines
 
+The engine is the core of our design. It is responsible for encrypting a plaintext using the DES algorithm and deciding wether the given key was correct. We decided to use the simplest possible design, a purely combinatorial engine.
+
+### Interface
+
+| Port | I/O | Type | Description |
+| ---- | --- | ---- | ----------- |
+| `p`  | in  | std_ulogic_vector(63 downto 0) | The plaintext |
+| `c`  | in  | std_ulogic_vector(63 downto 0) | The ciphertext |
+| `k`  | in  | std_ulogic_vector(55 downto 0) | The key |
+| `match`| out | std_ulogic | Whether `p` encrypted with `k` matches `c` or not |
+
+### Notes
+
+The entirety of the DES algorithm is implemented in the des_package.vhd file. 
+
+This architecture, while simple, turned out to be not as performant as we would have hoped. This, as well as alternative architectures, will be discussed in the synthesis section.
+
 ## Controller 
 
 ## AXI4 Lite wrapper
