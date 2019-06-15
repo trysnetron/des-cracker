@@ -69,7 +69,7 @@ architecture rtl of des_cracker is
 begin 
     sm: entity work.sm(rtl)
     generic map(
-        nr_engines => 8
+        nr_engines => 12
     )
     port map(
         clk     => aclk,    
