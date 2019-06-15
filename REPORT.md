@@ -51,7 +51,7 @@ The engine is the core of our design. It is responsible for encrypting a plainte
 
  The functionality of this engine was hard to validate by looking at waveforms alone, as it is purely combinatorial. Therefore we use a set of `assert` statements to check whether the engine identifies the correct key, and disregards the wrong keys. However, below is an image from the the waveforms of the simulation of engine 1 using GHDL and GTKWave. 
 
- ![waveform engine1](images/wf_engine.png?raw=true "waveform of succesful engine")
+ ![waveform engine1](images/wf-engine.png?raw=true)
 
 For this (and most of the coming validations) we use the the following plain text, key and cipher text: `plain text = 0x123456789ABCDEF`, `key = 0x12695BC9B7B7F8` and `cipher text = 85E813540F0AB405`. From the waveform we can see that when the correct key is put as input, the match signal goes high.
 
@@ -89,6 +89,10 @@ The implementation of the engine controller can be found in `des_sm.vhd` and it'
 ## Validation
 
 This entity was easier to validate by inspecting the waveforms, however we also use som assert statements to 
+
+![WF 1 of state machine](images/wf-sm-1.png?raw=true)
+![WF 2 of state machine](images/wf-sm-2.png?raw=true)
+
 
 ## AXI4 Lite wrapper
 
@@ -149,10 +153,10 @@ To make sure that our AXI-wrapper met the constraints mentioned above we use the
 
 4. We test that we get the correct responses when submitting read/write requests to addresses that are not mapped to, and when submitting write requests to adresses that are read-only. 
 
-![AXI WF1](images/wf_cracker1.png?raw=true "WF of axi-wrapper 1")
-![AXI WF2](images/wf_cracker2.png?raw=true "WF of axi-wrapper 2")
-![AXI WF3](images/wf_cracker3.png?raw=true "WF of axi-wrapper 3")
-![AXI WF4](images/wf_cracker4.png?raw=true "WF of axi-wrapper 4")
+![AXI WF1](images/wf-cracker-1.png?raw=true)
+![AXI WF2](images/wf-cracker-2.png?raw=true)
+![AXI WF3](images/wf-cracker-3.png?raw=true)
+![AXI WF4](images/wf-cracker-4.png?raw=true)
 
 As before we use asserts often to validate, but these images show the waveforms generated compiling with GHDL, and viewed using GTKWave as well. 
 
