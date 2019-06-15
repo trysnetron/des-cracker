@@ -13,12 +13,12 @@ end entity des_sm_sim;
 
 architecture sim of des_sm_sim is
 
-    constant period     : time := 1 ns;
-    constant plain_txt  : w64 := "0000000100100011010001010110011110001001101010111100110111101111";
-    constant crt_key    : w56 := "00010010011010010101101111001001101101111011011111111000";
-    -- constant crrct_key : w56 := x"12695BC9B7B7F8";
+    constant period      : time := 1 ns;
+    
+    constant plain_txt   : w64 := "0000000100100011010001010110011110001001101010111100110111101111";
+    constant crt_key     : w56 := "00010010011010010101101111001001101101111011011111111000";
     constant start_key1  : w56 := "00010010011010010101101111001001101101111011011111110101"; -- 03 less than correct key
-    constant start_key2  : w56 := "00010010011010010101101111001001101101111011011111101000"; -- 16 less than correct key
+    constant start_key2  : w56 := "00010010011010010101101111001001101101111011011111001000";
     constant crt_cphr    : w64 := "1000010111101000000100110101010000001111000010101011010000000101";
     
     signal clk           : std_ulogic;
@@ -59,37 +59,40 @@ begin
         crack_begin <= '0';
         sresetn <= '0';
         input_key <= start_key2;
-        for i in 1 to 3 loop
+        for i in 1 to 20 loop
             wait until rising_edge(clk);
         end loop;
         sresetn <= '1';
+        report "Test 1 start (Can find correct key)";
+
         crack_begin <= '1';
         wait until rising_edge(clk);
         wait on sm_complete;
         
         wait until rising_edge(clk);
         assert found_key = crt_key report "SM did not find correct key" severity error;
-        
-        for i in 1 to 3 loop
-            wait until rising_edge(clk);
-        end loop;
 
+        
         sresetn <= '0';
         crack_begin <= '0';
-        input_key <= crt_key;
-        for i in 1 to 3 loop
+        for i in 1 to 20 loop
             wait until rising_edge(clk);
         end loop;
         sresetn <= '1';
+        report "Test 2 start (k0 is correct key)";
+        -- Set start key to correct key
+        input_key <= crt_key;
+        -- Start cracking
         crack_begin <= '1';
-        wait until rising_edge(clk);
-        
+        -- Wait for completion signal
         wait on sm_complete;
+        -- Check that the found key is correct
         assert found_key = crt_key report "SM could not detect first key" severity error;
-        for i in 1 to 5 loop
+        
+
+        for i in 1 to 20 loop
             wait until rising_edge(clk);
         end loop;
-
         finish;
     end process tests;
 
