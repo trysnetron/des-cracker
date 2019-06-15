@@ -75,6 +75,8 @@ Also, in each clock cycle, `k` is set to the last key in the key array.
 
 ## AXI4 Lite wrapper
 
+The AXI4 Lite wrapper is, as the name suggests, just a thin wrapper around the rest of the system. It is capable of communicating via the AXI4 Lite protocol, making it possible for the embedded ARM Cortex CPU on the Zybo board interact with the DES cracker. 
+
 ## Synthesis
 
 ## Linux driver
