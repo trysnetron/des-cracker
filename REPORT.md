@@ -49,6 +49,30 @@ This architecture, while simple, turned out to be not as performant as we would 
 
 ## Controller 
 
+The controller is the brain of our design. It initiates an array of engines and manages the keys given to them. It is made as a rather simple state machine with 3 states.
+
+### Interface
+
+| Port | I/O | Type | Description |
+| ---- | --- | ---- | ----------- |
+| `clk`     | in  | std_ulogic                     | Clock signal |
+| `sresetn` | in  | std_ulogic                     | Reset signal, synchronous and active low |
+| `run`     | in  | std_ulogic                     | Cracking signal, kept high for the cracking to occur. |
+| `p`       | in  | std_ulogic_vector(63 downto 0) | The plaintext |
+| `c`       | in  | std_ulogic_vector(63 downto 0) | The ciphertext |
+| `k0`      | in  | std_ulogic_vector(55 downto 0) | The starting key |
+| `k`       | out | std_ulogic_vector(55 downto 0) | The highest key currently being worked on |
+| `k1`      | out | std_ulogic_vector(55 downto 0) | The correct key, when found |
+| `irq`     | out | std_ulogic                     | Interrupt request, set high for one clock period when the correct key is found. |
+
+### State diagram
+
+### Method of operation
+
+The controller works by creating an array of engines, and then supplying them with different keys, incrementing the given keys for each clock cycle. At the start of each clock cycle, the controlles checks whether any of the engines have had a match, if they have, the controller finds the index of the engine with correct key, extracts the key with the same index from the array of keys being cracked by the engines, and writes that key to `k1`, as well as setting the `irq` high. Then it changes state to FINISHED, and waits for `run` to be set low, resetting it to the IDLE state. If none of the engines have a match, each of the keys in the array of keys being worked on are incremented by the _number of engines_. This makes the engines always crack different keys without overlap.
+
+Also, in each clock cycle, `k` is set to the last key in the key array.
+
 ## AXI4 Lite wrapper
 
 ## Synthesis
