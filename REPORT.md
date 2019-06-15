@@ -86,13 +86,26 @@ This is illustrated in the diagram below. Also, in each clock cycle, the current
 
 The implementation of the engine controller can be found in `des_sm.vhd` and it's corresponding simulation entity in `sim_des_sm.vhd`.
 
-## Validation
+### Validation
 
-This entity was easier to validate by inspecting the waveforms, however we also use som assert statements to 
+As the AXI wrapper is just an thin wrapper around the state machine, as well as having actual restrictions placed on it by the specification, we do most of our validation there. We use two small tests on the state machine by itself, just to make sure it works, and can handle an edge case we had issues with.
+
+#### Test 1
+
+We load the plaintext, ciphertext and key used for testing into the state machine and make sure that it is able to find the correct key.
 
 ![WF 1 of state machine](images/wf-sm-1.png?raw=true)
+
+From the waveform, we see that the state machine signals when the correct key is found, and we confirm that it is correct.
+We can also confirm that the current key is updated at each clock cycle, like it is supposed to.
+
+#### Test 2
+
+Here, we simply test that the state machine is able to detect the correct key if it is the key given as a start key. 
+
 ![WF 2 of state machine](images/wf-sm-2.png?raw=true)
 
+We see in the waveform that the `sm_complete` is raised after two clock cycles, and when we read `found_key` we see that it is equal to the correct key, and equal to the starting key `input_key`. 
 
 ## AXI4 Lite wrapper
 
