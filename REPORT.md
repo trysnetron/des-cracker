@@ -158,13 +158,17 @@ As before we use asserts often to validate, but these images show the waveforms 
 
 ## Synthesis
 
-After synthesis we found that we were able to generate as much as 12 engines, using 88% of the logical ports on the FPGA and XX% of the memory. This part of the synthesis report is shown below
+After synthesis we found that we were able to generate as much as 12 engines, using 88% of the logical ports on the FPGA and 4% of the slice registers. This part of the synthesis report is shown below
 
-In relation to the timing the longest path in the design requires 56 ns to propagate through, meaning that the highest clock frequency we could operate at was 19 MHz. This is also shown below. 
+![LUT USAGE](images/logic_port_usage.png?raw=true "Logic Unit and Memory Usage")
 
-## Test on Zybo board
+In relation to the timing the longest path in the design requires 53 ns to propagate through, meaning that the highest clock frequency we could operate at was 19 MHz. This is shown below. 
+
+![Timing Report](images/timing_report.png?raw=true "Timing report")
 
 ## Conclusion
+
+Operating at a clock frequency of 19 MHz with 12 des-engines is probably far from the best design this year, but it means that we can test 228 million keys per second. However, with 2 to the power of 56 possible keys. The worst case is still that it would take 3658 days (approximately 10 years) to crack a 64 bit cipher with one Zybo board. 
 
 ## References
 
