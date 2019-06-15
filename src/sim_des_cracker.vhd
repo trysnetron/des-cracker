@@ -18,7 +18,7 @@ architecture sim of des_cracker_sim is
     constant axi_resp_SLVERR : std_ulogic_vector(1 downto 0) := "10";
     constant axi_resp_DECERR : std_ulogic_vector(1 downto 0) := "11";
     
-    constant period:       time :=  1 ns;
+    constant period    : time :=  1 ns;
 
     -- AXI Lite signals
     signal axi_aclk    : std_ulogic;        
@@ -48,6 +48,7 @@ architecture sim of des_cracker_sim is
 
     signal read_addr   : w12 := (others => '0');
     signal read_data   : w32 := (others => '0');
+    signal read_data2  : w32 := (others => '0');
     signal read_resp   : std_ulogic_vector(1 downto 0) := (others => '0');
 
     signal write_addr  : w12 := (others => '0');
@@ -159,12 +160,12 @@ begin
 
 
     begin
-        report "Test 1 start";
         axi_aresetn <= '0';
-        for i in 1 to 2 loop
+        for i in 1 to 20 loop
             wait until rising_edge(axi_aclk);
         end loop;
         axi_aresetn <= '1';
+        report "Test 1 start (Crack successfully)";
 
         -- Write p
         axi_write(addr_p_msb, plain_text(1 to 32));
@@ -175,8 +176,8 @@ begin
         axi_write(addr_c_lsb, cipher_txt(33 to 64));
         
         -- Write k0
-        axi_write(addr_k0_lsb, wrong_key1(25 to 56));
-        axi_write(addr_k0_msb, x"00" & wrong_key1(1 to 24));
+        axi_write(addr_k0_lsb, wrong_key2(25 to 56));
+        axi_write(addr_k0_msb, x"00" & wrong_key2(1 to 24));
         
         -- Wait until cracker signals found key
         wait on irq;
@@ -189,13 +190,14 @@ begin
         axi_read(addr_k1_msb, read_data);
         assert read_data = x"00" & crrct_key(1 to 24) report "Wrong msb of found key" severity error;
         
-        report "Test 2 start";
+
         axi_aresetn <= '0';
-        for i in 1 to 2 loop
+        for i in 1 to 20 loop
             wait until rising_edge(axi_aclk);
         end loop;
         axi_aresetn <= '1';
-
+        report "Test 2 start (Stop cracking)";
+            
         -- Write p
         axi_write(addr_p_msb, plain_text(1 to 32));
         axi_write(addr_p_lsb, plain_text(33 to 64));
@@ -205,26 +207,33 @@ begin
         axi_write(addr_c_lsb, cipher_txt(33 to 64));
         
         -- Write k0, starting the cracker
-        axi_write(addr_k0_lsb, wrong_key1(25 to 56));
-        axi_write(addr_k0_msb, x"00" & wrong_key1(1 to 24));
+        axi_write(addr_k0_lsb, wrong_key2(25 to 56));
+        axi_write(addr_k0_msb, x"00" & wrong_key2(1 to 24));
         
-        -- Wait 4 clock cycles (each cracking takes 1 cycle, and we need 10 to find)
-        for i in 1 to 4 loop
+        -- Wait one cycle before stopping the cracker
+        wait until rising_edge(axi_aclk);
+        
+        -- Write k0, stopping the cracker
+        axi_write(addr_k0_msb, x"00" & wrong_key2(1 to 24));
+        axi_write(addr_k0_lsb, wrong_key2(25 to 56));
+
+        -- Wait enough time for the cracking to have completed
+        for i in 1 to 15 loop
             wait until rising_edge(axi_aclk);
         end loop;
 
-        -- Write k0, stopping the cracker
-        axi_write(addr_k0_lsb, wrong_key1(25 to 56));
-        axi_write(addr_k0_msb, x"00" & wrong_key1(1 to 24));
-        
+        -- Read k1 ad make sure it hasn't found the correct key
+        -- If it wasn't stopped, the correct key should be in k1
+        axi_read(addr_k1_lsb, read_data);
+        assert read_data /= (crrct_key(25 to 56)) report "Engine did not stop working" severity error;
+
+
+        axi_aresetn <= '0';
         for i in 1 to 20 loop
             wait until rising_edge(axi_aclk);
         end loop;
-
-        report "Test 3 start";
-        axi_aresetn <= '0';
-        wait until rising_edge(axi_aclk);
         axi_aresetn <= '1';
+        report "Test 3 start (Freeze k)";
         
         -- Start cracking
         axi_write(addr_p_msb, plain_text(1 to 32));
@@ -235,33 +244,29 @@ begin
         axi_write(addr_k0_msb, x"00" & wrong_key2(1 to 24));
         
         wait until rising_edge(axi_aclk);
+        
         -- Read k lsb, freezing k
         axi_read(addr_k_lsb, read_data);
         
-        assert read_data = x"c9b7b7ab" report "k was wrong" severity error;
-
-        -- Wait 5 cycles for k msb to change
-        for i in 1 to 5 loop
-            wait until rising_edge(axi_aclk);
-        end loop;
+        -- Read k msb
         axi_read(addr_k_msb, read_data);
-        assert read_data = x"0012695b" report "k was not frozen" severity error;
-        for i in 1 to 5 loop
-            wait until rising_edge(axi_aclk);
-        end loop;
-        axi_read(addr_k_msb, read_data);
-        assert read_data = x"0012695b" report "k does not stay frozen" severity error;
-        for i in 1 to 5 loop
-            wait until rising_edge(axi_aclk);
-        end loop;
+        
+        -- Wait 2 cycles for k msb to change
+        wait until rising_edge(axi_aclk);
+        wait until rising_edge(axi_aclk);
+        
+        -- Read k msb again
+        axi_read(addr_k_msb, read_data2);
+        -- Compare k msbs, if they are different, k was not frozen
+        assert read_data = read_data2 report "k was not frozen" severity error;
         
 
-        report "Test 4 start";
         axi_aresetn <= '0';
-        for i in 1 to 2 loop
+        for i in 1 to 20 loop
             wait until rising_edge(axi_aclk);
         end loop;
         axi_aresetn <= '1';
+        report "Test 4 start (Illegal read/write addresses)";
 
         wait until rising_edge(axi_aclk);
         
@@ -277,6 +282,10 @@ begin
         axi_read(x"040", read_data);
         assert read_resp = axi_resp_DECERR report "Reading outside address range does not return DECERR" severity error;
         
+        for i in 1 to 40 loop
+            wait until rising_edge(axi_aclk);
+        end loop;
+
         finish;
     end process test;
 end architecture sim;
