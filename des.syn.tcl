@@ -18,7 +18,7 @@ array set ios {
   led[2] { G14 LVCMOS33 }
   led[3] { D18 LVCMOS33 }
 }
-set frequency_mhz 100
+set frequency_mhz 19
 
 
 # DO NOT MODIFY ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -65,7 +65,7 @@ puts "*********************************************"
 set_part $part
 set_property board_part $board [current_project]
 read_vhdl $src/des-cracker/src/des_pkg.vhd
-read_vhdl $src/des-cracker/src/des_key_checker.vhd
+read_vhdl $src/des-cracker/src/des_engine.vhd
 read_vhdl $src/des-cracker/src/des_sm.vhd
 read_vhdl $src/des-cracker/src/des_cracker.vhd
 ipx::package_project -import_files -root_dir $design -vendor www.telecom-paristech.fr -library DS -force $design

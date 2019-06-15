@@ -6,12 +6,12 @@ VMAP = $(MODELSIMPATH)/vmap
 VCOM = $(MODELSIMPATH)/vcom
 VSIM = $(MODELSIMPATH)/vsim
 VIVADO = $(VIVADOPATH)/vivado
-
+BOOTGEN = $(VIVADOPATH)/bootgen
 MS_WD = work
 GH_WD = gh_work
 
 # Source files, listed in order of compilation (it matters)
-LST = des_pkg  des_engine  des_key_checker  des_sm  des_cracker
+LST = des_pkg  des_engine  des_sm  des_cracker
 
 SRC = $(patsubst %,src/%.vhd,$(LST))
 SIMSRC = $(patsubst %,src/sim_%.vhd,$(LST))
@@ -24,8 +24,7 @@ compile-gh:
 
 check-gh: compile-gh
 	ghdl -r --std=08 --workdir=$(GH_WD) des_pkg_sim sim
-	ghdl -r --std=08 --workdir=$(GH_WD) des_engine_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_key_checker.vcd
-	ghdl -r --std=08 --workdir=$(GH_WD) des_key_checker_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_key_checker.vcd
+	ghdl -r --std=08 --workdir=$(GH_WD) des_engine_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_engine.vcd
 	ghdl -r --std=08 --workdir=$(GH_WD) des_sm_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_sm.vcd
 	ghdl -r --std=08 --workdir=$(GH_WD) des_cracker_sim sim --stop-time=500ns --vcd=$(GH_WD)/wf_cracker.vcd
 
@@ -48,7 +47,10 @@ sim_%: compile
 	$(VSIM) $*_sim
 
 syn: compile
-	cd syn && $(VIVADO) -mode batch -source ../des.syn.tcl -notrace -tclargs des_cracker	
+	rm -rf syn/* && cd syn && $(VIVADO) -mode batch -source ../des.syn.tcl -notrace -tclargs des_cracker	
+
+bin:
+	cd syn && $(BOOTGEN) -w -image ../boot.bif -o boot.bin
 
 clean: 
 	rm -rf .Xil/ .srcs/ des_cracker/
