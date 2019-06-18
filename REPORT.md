@@ -211,9 +211,9 @@ Operating at a clock frequency of 19 MHz with 12 des-engines is probably far fro
 
 As previously mentioned, our design takes a little over a year for the worst case. This is because of our single-clock-cycle-cracking. In one way this makes everything simpler for us, since adjustments will have immediate effect on the possible clock frequency of our design, but it is also inherently slow and will never beat more sophisticated architectures like reuseable DES rounds and pipelining.
 
-Pipelining is probably the best architecture for this project. It is based on splitting the DES algorithm up into smaller parts (e.x. initial permutation, 16 rounds of encryption, final permutation and comparison -> 19 steps), which should be about the same size.
+Pipelining is probably the best architecture for this project. It is based on splitting the DES algorithm up into smaller parts (e.x. initial permutation, 16 rounds of encryption, final permutation and comparison -> 19 steps) which should be about the same size, but would be able to run at a higher frequency, and using pipelining check one key per clock-cycle.
 
 ## References
 
-* [1] DES standard
-* [2] TU Berlin
+* [1] [DES standard](https://gitlab.eurecom.fr/renaud.pacalet/ds/blob/master/doc/des.pdf)
+* [2] [TU Berlin DES](http://page.math.tu-berlin.de/~kant/teaching/hess/krypto-ws2006/des.htm)
